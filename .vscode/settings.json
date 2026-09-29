@@ -1,0 +1,12 @@
+{
+    "vsmqtt.brokerProfiles": [
+        {
+            "name": "mqtt-eco",
+            "host": "mqtts://mqtt-eco.thingpark.com",
+            "port": 8883,
+            "clientId": "vsmqtt_client_c461",
+            "username": "user",
+            "password": "Y29tbXVuaXR5LWFwaS8xMDAwMDIxNjc=.MjMwMGQ2MDgtMDQwOS00MzhjLWE1N2QtMjk3NmYxNjkzMjUx"
+        }
+    ]
+}

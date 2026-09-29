@@ -1,0 +1,35 @@
+sudo npm install -g @angular/cli
+ng new abeemap --skip-tests
+cd abeemap
+ng add @angular/material
+ng g m app-material --flat
+// edit app/app-material.module.ts and app/app.module.ts
+
+ng g c --skip-tests --module app components/navigation
+ng g c --skip-tests --module app components/home
+ng g c --skip-tests --module app components/page01
+ng g c --skip-tests --module app components/page02
+ng g c --skip-tests --module app components/user
+ng g c --skip-tests --module app components/login
+ng g c --skip-tests --module app components/api-keys
+// edit app/app-routing.module.ts
+
+ng g c --skip-tests --module app components/map
+ng g service --skip-tests services/leaflet-map
+ng g service --skip-tests services/mqtt-client
+
+ng g s --skip-tests auth/auth
+
+ng g s --skip-tests intregrations
+
+npm i --save jwt-decode
+npm i --save @types/jwt-decode
+
+npm i --save leaflet
+npm i --save-dev @types/leaflet
+npm i --save @asymmetrik/ngx-leaflet
+npm i --save @geoman-io/leaflet-geoman-free
+
+ng add @angular/elements
+https://angular.io/guide/elements
+https://dev.to/brsjsk/angular-custom-elements-introduction-2cen

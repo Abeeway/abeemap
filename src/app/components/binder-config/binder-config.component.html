@@ -1,0 +1,73 @@
+<div id="component-container">
+
+  <div id="component-header">
+
+    @if (!formTypeIsCreate) {
+      <h2>Edit Binder Config</h2>
+    }
+    @if (formTypeIsCreate) {
+      <h2>Create Binder Config</h2>
+    }
+
+    <button mat-icon-button color="primary" (click)="goBack()" matTooltip="Go back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    @if (formTypeIsCreate) {
+      <button mat-icon-button color="primary" (click)="create()" matTooltip="Create Binder Config">
+        <mat-icon>check</mat-icon>
+      </button>
+    }
+    @if (!formTypeIsCreate) {
+      <button mat-icon-button color="primary" (click)="save()" matTooltip="Save Binder Config">
+        <mat-icon>save</mat-icon>
+      </button>
+    }
+
+  </div>
+
+  <div id="component-body" class="mat-elevation-z8">
+
+    @if (binderConfig) {
+      <div id="component-form">
+        <p>
+          @if (!formTypeIsCreate) {
+            <mat-form-field floatLabel="always"  >
+              <mat-label>ref:</mat-label>
+              <input matInput [(ngModel)]="binderConfig.ref" type="text" id="ref" readonly/>
+            </mat-form-field>
+          }
+        </p>
+        <p>
+          <mat-form-field floatLabel="always"  >
+            <mat-label>Network Server Server URL:</mat-label>
+            <input matInput [(ngModel)]="binderConfig.callbackURL" type="text" id="callbackURL" />
+          </mat-form-field>
+        </p>
+        <p>
+          <mat-form-field floatLabel="always"  >
+            <mat-label>DevEUI List:</mat-label>
+            <input matInput [(ngModel)]="binderConfig.deviceEUIList" type="text" id="deviceEUIList" />
+          </mat-form-field>
+        </p>
+      </div>
+    }
+
+  </div>
+
+  <div id="component-footer">
+    <button mat-icon-button color="primary" (click)="goBack()" matTooltip="Go back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    @if (formTypeIsCreate) {
+      <button mat-icon-button color="primary" (click)="create()" matTooltip="Create Binder Config">
+        <mat-icon>check</mat-icon>
+      </button>
+    }
+    @if (!formTypeIsCreate) {
+      <button mat-icon-button color="primary" (click)="save()" matTooltip="Save Binder Config">
+        <mat-icon>save</mat-icon>
+      </button>
+    }
+  </div>
+
+</div>

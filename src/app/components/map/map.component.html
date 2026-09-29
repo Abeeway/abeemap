@@ -1,0 +1,29 @@
+<div class="map-container">
+  <div class="button-frame">
+
+    <button mat-raised-button (click)="zoomToFloorplan01()" class="control-button" matTooltip="Zoom to Floorplan #1">
+      <mat-icon>arrow_forward</mat-icon>
+      <mat-icon>dashboard</mat-icon>
+    </button>
+    <button mat-raised-button (click)="zoomToFloorplan02()" class="control-button" matTooltip="Zoom to Floorplan #2">
+      <mat-icon>arrow_forward</mat-icon>
+      <mat-icon>dashboard</mat-icon>
+    </button>
+    <button mat-raised-button (click)="zoomToDevices()" class="control-button" matTooltip="Zoom to Tracked Objects">
+      <mat-icon>arrow_forward</mat-icon>
+      <mat-icon>person_pin_circle</mat-icon>
+    </button>
+    <button mat-raised-button (click)="zoomToBeacons()" class="control-button" matTooltip="Zoom to Bluetooth Beacons">
+      <mat-icon>arrow_forward</mat-icon>
+      <mat-icon>bluetooth</mat-icon>
+    </button>
+
+    <!-- &nbsp;&nbsp; -->
+    <!-- <br/> -->
+    <mat-slide-toggle [(ngModel)]="leafletMapService.beepsEnabled" class="control-button">Beeps</mat-slide-toggle>
+
+  </div>
+  <div id="map-container">
+    <div id="map"></div>
+  </div>
+</div>

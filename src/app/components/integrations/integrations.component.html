@@ -1,0 +1,443 @@
+<div id="component-container">
+  <div id="component-header">
+    <h2>{{ componentTitle }}</h2>
+  </div>
+  <div id="component-body">
+
+    <p>
+      The dataflow between end-devices and application server is represented by the following diagram:
+    </p>
+
+    <div class="data-flow">
+      <button mat-raised-button>
+        <mat-icon>lan</mat-icon>
+        Network Server
+      </button>
+      <mat-icon>swap_horiz</mat-icon>
+      <button mat-raised-button>
+        <mat-icon>settings</mat-icon>
+        Location Solver
+      </button >
+      <mat-icon>swap_horiz</mat-icon>
+      <button mat-raised-button>
+        <mat-icon>computer</mat-icon>
+        Application Server
+      </button>
+    </div>
+
+    <br/>
+
+    <mat-accordion>
+
+
+
+
+
+
+      <mat-card class="tpxle-card">
+
+        <mat-card-subtitle><b>Integration wizards</b></mat-card-subtitle>
+
+        <mat-card-content>
+
+
+
+
+
+
+
+          <mat-expansion-panel
+            [expanded]="integrationsService.panel4Opened"
+            (opened)="integrationsService.panel4Opened=true"
+            (closed)="integrationsService.panel4Opened=false"
+            >
+
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>settings_suggest</mat-icon>&nbsp;
+                Setup wizard
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <mat-stepper orientation="vertical" linear="true" #stepper>
+              <mat-step [stepControl]="firstFormGroup">
+                <form [formGroup]="firstFormGroup">
+                  <ng-template matStepLabel>Fill in the form with your configuration parameters</ng-template>
+
+                  <br/>
+                  <mat-card>
+
+                    <mat-card-header>
+                      <mat-card-title>Location Solver Platform</mat-card-title>
+                      <!-- <mat-card-subtitle>Start</mat-card-subtitle> -->
+                    </mat-card-header>
+
+                    <mat-card-content>
+
+                      <mat-form-field appearance="fill" class="le-platform">
+                        <mat-label>Location Engine Platform</mat-label>
+                        <mat-select formControlName="lePlatformCtrl" (selectionChange)="onPlatformChange()" required>
+
+                          <mat-option value="ECODX" >TPXLE Community</mat-option>
+                          <mat-option value="ECOKC" >TPXLE MobileApp</mat-option>
+                          <mat-option value="PREVDX">TPXLE Community Preview</mat-option>
+                          <mat-option value="PREVKC">TPXLE MobileApp Preview</mat-option>
+
+                        </mat-select>
+                      </mat-form-field>
+
+                    </mat-card-content>
+                  </mat-card>
+
+                  <br/>
+                  <mat-card>
+
+                    <mat-card-header>
+                      <mat-card-title>Network Sever Parameters</mat-card-title>
+                      <!-- <mat-card-subtitle>Start</mat-card-subtitle> -->
+                    </mat-card-header>
+
+                    <mat-card-content>
+
+                      <mat-form-field appearance="fill">
+                        <mat-label>Network Server</mat-label>
+                        <mat-select formControlName="nsVendorCtrl" required>
+                          @for (nsVendor of nsVendors; track nsVendor) {
+                            <mat-option [value]="nsVendor.id">
+                              {{nsVendor.name}}
+                            </mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      &nbsp;
+
+                      <mat-form-field appearance="fill">
+                        <mat-label>NS Integration type</mat-label>
+                        <mat-select formControlName="nsIntegrationTypeCtrl" required>
+                          <mat-option value="mqtt" [disabled]="(firstFormGroup.value.lePlatformCtrl=='ECOKC')||(firstFormGroup.value.lePlatformCtrl=='PREVKC')">MQTT</mat-option>
+                          <!-- <mat-option value="mqtt">MQTT</mat-option> -->
+                          <mat-option value="http">HTTP</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+
+                      <br/>
+                      @if (firstFormGroup.value.nsIntegrationTypeCtrl == 'http' && ['chirpstack', 'everynet', 'senet', 'loriot', 'kerlink'].includes(firstFormGroup.value.nsVendorCtrl || '')) {
+                        <mat-form-field
+                          appearance="fill"
+                          [style.width.px]=435
+                          >
+                          <mat-label>Downlink API URL</mat-label>
+                          <input matInput placeholder="DOWNLINK_API_URL" formControlName="downlinkApiUrlCtrl" required>
+                        </mat-form-field>
+                      }
+
+                      <br/>
+                      @if (firstFormGroup.value.nsIntegrationTypeCtrl == 'http' && ['chirpstack', 'everynet', 'senet', 'kerlink'].includes(firstFormGroup.value.nsVendorCtrl || '')) {
+                        <mat-form-field
+                          appearance="fill"
+                          [style.width.px]=435
+                          >
+                          <mat-label>Downlink API Key</mat-label>
+                          <input matInput placeholder="DOWNLINK_API_KEY" formControlName="downlinkApiKeyCtrl" required>
+                        </mat-form-field>
+                      }
+
+                    </mat-card-content>
+
+                  </mat-card>
+
+                  <br/>
+
+                  <mat-card>
+
+                    <mat-card-header>
+                      <mat-card-title>Application Sever Parameters</mat-card-title>
+                      <!-- <mat-card-subtitle>Start</mat-card-subtitle> -->
+                    </mat-card-header>
+
+                    <mat-card-content>
+
+                      <mat-form-field appearance="fill">
+                        <mat-label>App Server</mat-label>
+                        <mat-select formControlName="asCtrl" required (selectionChange)="onASChange()">
+                          <mat-option value="adm">Abeeway Device Manager</mat-option>
+                          <mat-option value="abeemap">Abeemap</mat-option>
+                          <mat-option value="other">Other</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+
+                      &nbsp;
+
+                      @if (firstFormGroup.value.asCtrl==='other' ) {
+                        <mat-form-field appearance="fill">
+                          <mat-label>AS Integration type</mat-label>
+                          <mat-select formControlName="asIntegrationTypeCtrl" required>
+                            <mat-option value="mqtt" disabled>MQTT</mat-option>
+                            <mat-option value="http">HTTP</mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      }
+
+                      &nbsp;
+
+                      @if (firstFormGroup.value.asCtrl==='other' ) {
+                        <mat-form-field appearance="fill">
+                          <mat-label>App Server ID</mat-label>
+                          <input matInput placeholder="asId" formControlName="asIdCtrl" required>
+                        </mat-form-field>
+                      }
+
+                      <br/>
+
+                      @if (firstFormGroup.value.asCtrl==='other' && firstFormGroup.value.asIntegrationTypeCtrl == 'http' ) {
+                        <mat-form-field
+                          appearance="fill"
+                          [style.width.px]=435
+                          >
+                          <mat-label>App Server URL</mat-label>
+                          <input matInput placeholder="asUrl" formControlName="asUrlCtrl" required>
+                        </mat-form-field>
+                      }
+
+                    </mat-card-content>
+
+                  </mat-card>
+                  <br/>
+
+                  <div>
+                    <button mat-button matStepperNext>Next</button>
+                  </div>
+
+                </form>
+              </mat-step>
+
+              <mat-step>
+
+                <ng-template matStepLabel>Configure your architecture components</ng-template>
+
+                <br/>
+
+                @if (firstFormGroup.value.nsIntegrationTypeCtrl == 'mqtt' || (firstFormGroup.value.asCtrl == 'other' && firstFormGroup.value.asIntegrationTypeCtrl == 'mqtt')) {
+                  <div>
+                    Use the <i>Key Management Module</i> of <i>ThingPark Location Solver</i> to create an <i>MQTT API key</i>.
+                    <ul>
+                      <li>
+                        Record your key and use it later as a <i>password</i> for connecting to one of the following <i>MQTT Broker</i> URLs:<br/>
+                        &nbsp;&nbsp;<b><i>{{mqttBrokerSSL}}</i></b> <br/>
+                        &nbsp;&nbsp;<b><i>{{mqttBrokerWSS}}</i></b> <br/>
+                      </li>
+                      <li>
+                        The MQTT User Name is not relevant. You can set it as an empty string or as any arbitrary string. <br/>
+                      </li>
+                    </ul>
+                    <br/>
+                  </div>
+                }
+
+                Configure your <i>Network Server</i> so that
+                @if (firstFormGroup.value.nsIntegrationTypeCtrl == 'mqtt') {
+                  <ul>
+                    <li>
+                      it publishes uplink messages to the following MQTT topic:
+                      <b><i>{{userId}}/NS_LE/{{firstFormGroup.value.nsVendorCtrl}}/{{firstFormGroup.value.asIdCtrl}}</i></b><br/>
+                    </li>
+                    <li>
+                      it subscribes to the following MQTT topic for receiving downlink messages:
+                      <b><i>{{userId}}/LE_NS/{{firstFormGroup.value.nsVendorCtrl}}</i></b><br/>
+                    </li>
+                  </ul>
+                }
+
+
+                @if (firstFormGroup.value.nsIntegrationTypeCtrl == 'http') {
+                  <div>
+                    <ul>
+                      <li>
+                        it forwards uplink messages to the following URL with HTTP headers listed below: <br/>
+                        &nbsp;&nbsp;<b><i>https://nano-things.net/tpxle-nit/uplink_from_{{firstFormGroup.value.nsVendorCtrl}}/{{firstFormGroup.value.asIdCtrl}}</i></b> <br/>
+                        Headers: <br/>
+                        @if (firstFormGroup.value.nsVendorCtrl !== 'loriot') {
+                          <span>
+                            &nbsp;&nbsp; x-client-id:       {{authService.userId}} <br/>
+                            &nbsp;&nbsp; x-client-secret:   YOUR_PASSWORD <br/>
+                            &nbsp;&nbsp; x-realm:           {{getPlatformConfig().X_REALM}} <br/>
+                          </span>
+                        }
+                        @if (['chirpstack', 'everynet', 'senet', 'kerlink'].includes(firstFormGroup.value.nsVendorCtrl || '')) {
+                          <span>
+                            &nbsp;&nbsp; x-downlink-api:    {{firstFormGroup.value.downlinkApiUrlCtrl}} <br/>
+                            &nbsp;&nbsp; x-downlink-apikey: {{firstFormGroup.value.downlinkApiKeyCtrl}} <br/>
+                          </span>
+                        }
+                        @if (firstFormGroup.value.nsVendorCtrl === 'loriot') {
+                          <span>
+                            &nbsp;&nbsp; Authorization: {{authService.userId}}|YOUR_PASSWORD|{{getPlatformConfig().X_REALM}}|{{firstFormGroup.value.downlinkApiUrlCtrl}} <br/>
+                          </span>
+                        }
+                      </li>
+                    </ul>
+                    @if (firstFormGroup.value.nsVendorCtrl !== 'proximus') {
+                      <div>
+                        Configure the <i>Binder Module</i> of <i>ThingPark Location Solver</i> so that
+                        <ul>
+                          <li>
+                            it forwards downlink messages to the following URL: <br/>
+                            &nbsp;&nbsp;<b><i>https://nano-things.net/tpxle-nit/downlink_to_{{firstFormGroup.value.nsVendorCtrl}}/{{firstFormGroup.value.asIdCtrl}} </i></b><br/>
+                          </li>
+                        </ul>
+                      </div>
+                    }
+                    @if (firstFormGroup.value.nsVendorCtrl === 'proximus') {
+                      <div>
+                        Sending downlink messages through the <i>Binder Module</i> of <i>ThingPark Location Solver</i> is not supported for Proximus yet for Proximus. <br/><br/>
+                      </div>
+                    }
+                  </div>
+                }
+
+
+                @if (firstFormGroup.value.asCtrl === 'other' && firstFormGroup.value.asIntegrationTypeCtrl == 'mqtt' ) {
+                  <div>
+                    Configure your <i>Application</i> server so that
+                    <ul>
+                      <li>
+                        it subscribes to the following MQTT topic for receiving uplink messages:
+                        <b><i>{{userId}}/LE_AS/{{firstFormGroup.value.asIdCtrl}}/#</i></b><br/>
+                      </li>
+                      <li>
+                        it publishes downlink messages to the following MQTT topic:
+                        <b><i>{{userId}}/AS_LE</i></b><br/>
+                      </li>
+                    </ul>
+                  </div>
+                }
+                @if (firstFormGroup.value.asCtrl === 'other' && firstFormGroup.value.asIntegrationTypeCtrl === 'http' ) {
+                  <div>
+                    Configure the <i>Connector Config Module</i> of <i>ThingPark Location Solver</i> so that
+                    <ul>
+                      <li>
+                        it forwards uplink messages to the following URL: <br/>
+                        &nbsp;&nbsp;<b><i>{{firstFormGroup.value.asUrlCtrl}}</i></b><br/>
+                      </li>
+                    </ul>
+                    Configure your <i>Application Server</i> so that
+                    <ul>
+                      <li>
+                        it forwards downlink messages (tracker commands) to the following URL: <br/>
+                        &nbsp;&nbsp;<b><i>{{trackerCommandsAPI}}</i></b><br/>
+                      </li>
+                    </ul>
+                  </div>
+                }
+
+
+                @if (firstFormGroup.value.asCtrl === 'abeemap') {
+                  <div>
+                    Configure the <i>Connector Config Module</i> of <i>ThingPark Location Solver</i> so that
+                    <ul>
+                      <li>
+                        it forwards resolved locations to the following URL: <b><i>{{targetURL}}/{{firstFormGroup.value.asIdCtrl}}</i></b><br/>
+                        <p><i>
+                          (This temporary workaround forwards resolved locations to a HTTP-MQTT bridge that publishes those messages at the appropriate MQTT topic.
+                          The workaround is needed until ThingPark Location Solver will support publishing resolved locations to MQTT topics.)
+                        </i></p>
+                      </li>
+                    </ul>
+                  </div>
+                }
+
+
+                <div>
+                  <button mat-button matStepperPrevious>Back</button>
+                  <!-- <button mat-button matStepperNext>Next</button> -->
+                  <!-- <button mat-button (click)="stepper.reset()">Reset</button> -->
+                </div>
+
+              </mat-step>
+
+            </mat-stepper>
+          </mat-expansion-panel>
+
+          <br />
+
+        </mat-card-content>
+      </mat-card>
+
+
+      <mat-card class="tpxle-card">
+
+        <mat-card-subtitle><b>ThingPark Location Solver Configuration</b></mat-card-subtitle>
+
+        <mat-card-content>
+
+          <mat-expansion-panel
+            [expanded]="integrationsService.panel1Opened"
+            (opened)="integrationsService.panel1Opened=true"
+            (closed)="integrationsService.panel1Opened=false"
+            >
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>vpn_key</mat-icon>&nbsp;
+                Key Management Module
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <app-api-keys></app-api-keys>
+
+          </mat-expansion-panel>
+          <br />
+
+          <mat-expansion-panel
+            [expanded]="integrationsService.panel2Opened"
+            (opened)="integrationsService.panel2Opened=true"
+            (closed)="integrationsService.panel2Opened=false"
+            >
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>settings</mat-icon>
+                <mat-icon>arrow_forward</mat-icon>
+                <mat-icon>lan</mat-icon>
+                &nbsp;
+                Binder Module
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            Binder Config Module
+            <app-binder-configs></app-binder-configs>
+
+          </mat-expansion-panel>
+          <br />
+
+          <mat-expansion-panel
+            [expanded]="integrationsService.panel3Opened"
+            (opened)="integrationsService.panel3Opened=true"
+            (closed)="integrationsService.panel3Opened=false"
+            >
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>settings</mat-icon>
+                <mat-icon>arrow_forward</mat-icon>
+                <mat-icon>computer</mat-icon>
+                &nbsp;
+                Connector Config Module
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            Connector Config Module<br/>
+
+            <app-connector-configs></app-connector-configs>
+
+          </mat-expansion-panel>
+
+
+        </mat-card-content>
+      </mat-card>
+
+    </mat-accordion>
+
+
+
+  </div>
+
+</div>

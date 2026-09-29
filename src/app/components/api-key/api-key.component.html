@@ -1,0 +1,75 @@
+<div id="component-container">
+
+  <div id="component-header">
+
+    @if (formTypeIsCreate) {
+      <h2>Create API Key</h2>
+    }
+    @if (!formTypeIsCreate) {
+      <h2>Reset API Key</h2>
+    }
+
+    <button mat-icon-button color="primary" (click)="goBack()" matTooltip="Go back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    @if (formTypeIsCreate) {
+      <button mat-icon-button color="primary" (click)="create()" matTooltip="Create API Key">
+        <mat-icon>check</mat-icon>
+      </button>
+    }
+    &nbsp;&nbsp;
+    @if (!formTypeIsCreate) {
+      <button mat-icon-button color="primary" (click)="reset()" matTooltip="Reset API Key">
+        <mat-icon>redo</mat-icon>
+      </button>
+    }
+
+  </div>
+
+  <div id="component-body" class="mat-elevation-z8">
+
+    @if (apiKey) {
+      <div id="component-form">
+        @if (!formTypeIsCreate) {
+          <p>
+            <mat-form-field floatLabel="always"  >
+              <mat-label>Id:</mat-label>
+              <input matInput [(ngModel)]="apiKey.id" type="text" id="id" readonly/>
+            </mat-form-field>
+          </p>
+        }
+        <p>
+          <mat-form-field floatLabel="always"  >
+            <mat-label>Name:</mat-label>
+            <input matInput [(ngModel)]="apiKey.name" type="text" id="name" [readonly]="!formTypeIsCreate" />
+          </mat-form-field>
+        </p>
+        <p>
+          <mat-form-field floatLabel="always"  >
+            <mat-label>Scope:</mat-label>
+            <input matInput [(ngModel)]="apiKey.scope" type="text" id="scope" [readonly]="!formTypeIsCreate" />
+          </mat-form-field>
+        </p>
+      </div>
+    }
+
+  </div>
+
+  <div id="component-footer">
+    <button mat-icon-button color="primary" (click)="goBack()" matTooltip="Go back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    @if (formTypeIsCreate) {
+      <button mat-icon-button color="primary" (click)="create()" matTooltip="Create API Key">
+        <mat-icon>check</mat-icon>
+      </button>
+    }
+    &nbsp;&nbsp;
+    @if (!formTypeIsCreate) {
+      <button mat-icon-button color="primary" (click)="reset()" matTooltip="Reset API Key">
+        <mat-icon>redo</mat-icon>
+      </button>
+    }
+  </div>
+
+</div>

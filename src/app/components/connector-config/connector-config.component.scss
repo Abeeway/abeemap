@@ -1,0 +1,36 @@
+#component-container {
+    height: 100%;
+    display: flex;
+    flex-flow: column nowrap;
+}
+
+#component-header {
+    flex: 0 0;
+}
+#component-body {
+    flex: 1 1;
+    display: flex;
+    flex-flow: column nowrap;
+
+    overflow: auto;
+    /*
+    justify-items: flex-start;
+    align-items: flex-start;
+    */
+}
+#component-footer {
+    flex: 0 0;
+}
+
+#component-form {
+    flex: 1 1;
+    display: flex;
+    flex-flow: column nowrap;
+    padding: 15px;
+}
+
+mat-form-field {
+    flex: 1 1;
+    width: 100%;
+    max-width: 500px;
+}

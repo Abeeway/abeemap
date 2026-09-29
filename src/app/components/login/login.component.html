@@ -1,0 +1,83 @@
+<div class="main-login-container">
+  <mat-toolbar color="primary">
+    AbeeMap
+  </mat-toolbar>
+  <div class="login-container">
+
+    <!-- <form [formGroup]="form" (ngSubmit)="onSubmit()"> -->
+    <form [formGroup]="form">
+
+      <mat-card appearance="outlined" class="login-card">
+
+        <mat-card-header class="centered-card-element">
+          <mat-card-title class="centered-card-element">
+            Abeemap Login Form
+          </mat-card-title>
+          <!-- <mat-card-subtitle class="centered-card-element">
+          Please use your ThingPark Community credentials!
+        </mat-card-subtitle> -->
+      </mat-card-header>
+      <br/>
+      <mat-card-content>
+
+
+        <mat-form-field appearance="fill" class="full-width-input">
+          <mat-label>Location Engine Platform</mat-label>
+          <mat-select formControlName="platformSelector" (selectionChange)="onPlatformChange()" required>
+            <mat-option value="ECODX" >TPXLE Community</mat-option>
+            <mat-option value="ECOKC" >TPXLE MobileApp</mat-option>
+            <mat-option value="PREVDX">TPXLE Community Preview</mat-option>
+            <mat-option value="PREVKC">TPXLE MobileApp Preview</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+
+        <mat-form-field class="full-width-input">
+          <mat-label>User name</mat-label>
+          <input matInput autocomplete="username" placeholder="User name" formControlName="userName" required>
+          @if (isFieldInvalid('userName')) {
+            <mat-error>
+              Please inform your User name
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field class="full-width-input">
+          <mat-label>Password</mat-label>
+          <input matInput autocomplete="current-password" name="password" type="password" placeholder="Password" formControlName="password" required>
+          @if (isFieldInvalid('password')) {
+            <mat-error>
+              Please inform your Password
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field floatLabel="always" class="full-width-input">
+          <mat-label>MQTT API Key</mat-label>
+          <input matInput id="api-key" type="text" autocomplete="new-password" formControlName="mqttAPIKey">
+          @if (form.get('mqttAPIKey')?.value) {
+            <button matSuffix mat-icon-button aria-label="Clear" (click)="clearMQTTAPIKey()">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+          @if (isFieldInvalid('mqttAPIKey')) {
+            <mat-error>
+              Please inform your MQTT API Key
+            </mat-error>
+          }
+        </mat-form-field>
+        <!-- <mat-form-field class="full-width-input">
+        <input matInput placeholder="MQTT Topic" formControlName="mqttTopic" required>
+        <mat-error *ngIf="isFieldInvalid('mqttTopic')">
+          Please inform your MQTT Topic
+        </mat-error>
+      </mat-form-field> -->
+    </mat-card-content>
+    <mat-card-actions class="centered-card-element">
+      <button mat-raised-button color="primary" type="submit" (click)="onSubmit()">Login</button>
+    </mat-card-actions>
+    <mat-card-footer></mat-card-footer>
+  </mat-card>
+
+</form>
+
+</div>
+</div>

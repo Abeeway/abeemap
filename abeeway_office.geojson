@@ -1,0 +1,178 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "marker-color": "#7e7e7e",
+                "marker-size": "medium",
+                "marker-symbol": "",
+                "name": "PT1",
+                "id": "",
+                "mac": "AC:23:3F:28:71:90"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    7.06638,
+                    43.61571
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "marker-color": "#7e7e7e",
+                "marker-size": "medium",
+                "marker-symbol": "",
+                "name": "PT2",
+                "id": "",
+                "mac": "AC:23:3F:2A:F7:67"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    7.0664,
+                    43.61567
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "marker-color": "#7e7e7e",
+                "marker-size": "medium",
+                "marker-symbol": "",
+                "name": "PT3",
+                "id": "",
+                "mac": "AC:23:3F:2A:F7:66"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    7.0665,
+                    43.61568
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "marker-color": "#7e7e7e",
+                "marker-size": "medium",
+                "marker-symbol": "",
+                "name": "PT4",
+                "id": "",
+                "mac": "AC:23:3F:2A:F7:6A"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    7.06656,
+                    43.61574
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "marker-color": "#7e7e7e",
+                "marker-size": "medium",
+                "marker-symbol": "",
+                "name": "PT5",
+                "id": "",
+                "mac": "AC:23:3F:2A:F7:6E"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    7.06652,
+                    43.61582
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "marker-color": "#7e7e7e",
+                "marker-size": "medium",
+                "marker-symbol": "",
+                "name": "PT6",
+                "id": "",
+                "mac": "AC:23:3F:2A:F7:5F"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    7.0664,
+                    43.61583
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "marker-color": "#7e7e7e",
+                "marker-size": "medium",
+                "marker-symbol": "",
+                "name": "PT7",
+                "id": "",
+                "mac": "AC:23:3F:28:70:46"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    7.06645,
+                    43.61576
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            7.066349722445011,
+                            43.61581734490498
+                        ],
+                        [
+                            7.066353410482407,
+                            43.61568505489411
+                        ],
+                        [
+                            7.066388949751854,
+                            43.61566709255826
+                        ],
+                        [
+                            7.066498920321464,
+                            43.615658111388335
+                        ],
+                        [
+                            7.066566310822964,
+                            43.61569767707286
+                        ],
+                        [
+                            7.06657636910677,
+                            43.6157586033214
+                        ],
+                        [
+                            7.066562622785568,
+                            43.61580350908262
+                        ],
+                        [
+                            7.066454328596592,
+                            43.61585205581374
+                        ],
+                        [
+                            7.066349722445011,
+                            43.61581734490498
+                        ]
+                    ]
+                ]
+            }
+        }
+    ]
+}

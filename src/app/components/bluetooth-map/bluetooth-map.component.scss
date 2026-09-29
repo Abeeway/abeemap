@@ -1,0 +1,43 @@
+.map-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0px;
+}
+
+.button-frame {
+  position: absolute;
+  left: 50px;
+  top: 7px;
+  z-index: 10;
+}
+
+.control-button {
+  //width: 65px !important;
+  min-width: unset !important;
+  height: 30px;
+  margin-left: 5px;
+  margin-top: 4px;
+  padding-left: 11px;
+  padding-right: 0px;
+}
+
+.control-button1 {
+  // width: 50px !important;
+  padding-right: 8px;
+}
+
+#map-container {
+  height: 100%;
+}
+
+#map {
+  height: 100%;
+  z-index: 5;
+}
+
+.leaflet-tile {
+  filter: hue-rotate(45deg) !important;
+}

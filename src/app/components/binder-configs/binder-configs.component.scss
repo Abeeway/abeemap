@@ -1,0 +1,90 @@
+#component-container1 {
+  display:  flex;
+  flex-flow: column nowrap;
+  height: 100%;
+  width: 100%;
+}
+
+#component-header1 {
+  flex: 0 0 auto;
+}
+
+#component-body1 {
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+/* #component-body
+{
+  width: 100%;
+  flex: 1 1;
+  overflow: auto;
+  position: relative;
+} */
+
+.table-container1 {
+  width: 100%;
+  /* max-height: 400px; */
+  overflow: auto;
+  /* position: relative; */
+}
+
+table {
+  width: 100%;
+  /* table-layout: fixed; */
+
+}
+/* table tr:nth-child(even) { 
+    background-color: #f2f2f2; 
+} */
+table tr:hover {
+  /* background-color: #ddd;  */
+  background-color: #f2f2f2;
+}
+td {
+  overflow-wrap: anywhere;
+  min-width: 80px;
+  /* word-wrap: break-word; */
+}
+
+/* table th.ref {
+  min-width: 25%;
+}
+table th.callbackURL {
+  min-width: 25%;
+}
+table th.deviceEUIList {
+  min-width: 25%;
+}
+table th.tools {
+  min-width: 25%;
+} */
+
+table td.tools {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.mat-mdc-cell,
+.mat-mdc-header-cell {
+  padding-left: 15px;
+}
+
+.loading-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 56px;
+  right: 0;
+  background: rgba(0, 0, 0, 0.15);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+h2 {
+  /* font-weight: bold; */
+  font-size: 120%;
+  margin: 0;
+}

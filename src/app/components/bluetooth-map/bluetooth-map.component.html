@@ -1,0 +1,38 @@
+<div class="map-container">
+  <div class="button-frame">
+    <button mat-raised-button (click)="getBluetoothMap()" class="control-button" matTooltip="Get from ThingPark Location Engine">
+      <mat-icon >download</mat-icon>
+    </button>
+    <button mat-raised-button (click)="delsetBluetoothMap()" class="control-button" matTooltip="Upload to ThingPark Location Engine">
+      <mat-icon>publish</mat-icon>
+    </button>
+    <button mat-raised-button (click)="deleteBluetoothMap()" class="control-button" matTooltip="Delete from ThingPark Location Engine">
+      <mat-icon>delete</mat-icon>
+    </button>
+    &nbsp;&nbsp;
+    <button mat-raised-button (click)="clearMap()" class="control-button" matTooltip="Clear map locally">
+      <mat-icon>playlist_remove</mat-icon>
+    </button>
+    <button mat-raised-button (click)="exportMap()" class="control-button control-button1" matTooltip="Edit GeoJSON locally">
+      <mat-icon>edit_note</mat-icon>
+      <span>&#123;&#125;</span>
+    </button>
+    &nbsp;&nbsp;
+    <button mat-raised-button (click)="zoomToBeacons()" class="control-button" matTooltip="Zoom to Bluetooth Map">
+      <!-- <mat-icon>zoom_in_map</mat-icon> -->
+      <mat-icon>arrow_forward</mat-icon>
+      <mat-icon>bluetooth</mat-icon>
+    </button>
+    <!-- <button mat-raised-button (click)="switchMap()" class="control-button">Switch Map</button> -->
+
+    <!--
+    <input type="file" style="display:none;" id="geojson-file-selector" (change)="setBluetoothMap1($event)" #fileUpload>
+    <button  mat-raised-button class="upload-btn" (click)="fileUpload.click()">upload geojson file</button>
+    -->
+
+  </div>
+  <div id="map-container">
+    <div id="map"></div>
+  </div>
+</div>
+

@@ -1,0 +1,40 @@
+
+/* TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version. */
+
+.main-login-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+}
+.login-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: raw;
+  justify-content: center;
+  align-items: center;
+}
+.login-card {
+  display: inline-block;
+  max-width: 400px;
+}
+.centered-card-element {
+  display: flex;
+  justify-content: center;
+}
+.full-width-input {
+  width: 100%;
+}
+
+
+@font-face {
+  font-family: 'password';
+  font-style: normal;
+  font-weight: 400;
+  /* src: url("https://jsbin-user-assets.s3.amazonaws.com/rafaelcastrocouto/password.ttf"); */
+  src: url("../../../assets/password.ttf") format("truetype");
+}
+#api-key {
+  font-family: 'password';
+}

@@ -30,3 +30,4 @@ manually from the workflow's **Run workflow** button.
 
 The deployment creates a `404.html` copy of the application shell so that
 direct links to Angular routes continue to work on GitHub Pages.
+

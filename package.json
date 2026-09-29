@@ -6,7 +6,7 @@
   },
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "dev": "ng serve",
     "build": "ng build --base-href /abeemap/",
     "unpublish": "ssh -p 21812 user@nano-things.net 'rm -rf apps/html/abeemap'",
     "publish": "scp -r -P 21812 ./dist/abeemap user@nano-things.net:apps/html/abeemap",

@@ -15,16 +15,17 @@ const PREVKC_API_BASE_URL = 'https://nano-things.net/abeemap_api_preview_kc';
 // const PREVDX_API_BASE_URL = 'https://dx-api.preview.thingpark.com';
 const PREVDX_API_BASE_URL = 'https://nano-things.net/abeemap_api_preview';
 
+// Resolve application routes from the base href supplied by the production
+// build. This keeps authentication on the same host as the deployed app.
+const APP_BASE_URL = new URL(document.baseURI).href.replace(/\/$/, '');
 
 export const CONFIG:any = {
 
   nitURL: 'https://nano-things.net/tpxle-nit',
  
-  //---- authorizationUrl: 'http://localhost:4200/login',
-  authorizationUrl: 'https://nano-things.net/abeemap/login',
+  authorizationUrl: `${APP_BASE_URL}/login`,
   response_type: 'token',
-  //---- redirect_uri: 'http://localhost:4200',
-  redirect_uri: 'https://nano-things.net/abeemap',
+  redirect_uri: APP_BASE_URL,
   client_id: 'abeemap',
   scope: 'sso_user abeemap_user',
 

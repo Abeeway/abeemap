@@ -76,6 +76,10 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   font-size: 0.7em;
 }
 
+app-bluetooth-map .leaflet-tile-pane {
+  filter: grayscale(100%);
+}
+
 
 /*
 .leaflet-tooltip-left.marker-tooltip::before {

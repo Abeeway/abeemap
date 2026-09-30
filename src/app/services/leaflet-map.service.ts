@@ -563,6 +563,27 @@ export class LeafletMapService {
     }
   }
 
+  private suppressPopupWhileDragging(marker: L.Marker) {
+    let popup: L.Popup | undefined;
+
+    marker.on('pm:dragstart', () => {
+      marker.closePopup();
+      popup = marker.getPopup();
+
+      // Geoman uses its own drag handler, so Leaflet does not suppress the
+      // click generated at the end of the drag. Temporarily unbinding the
+      // popup keeps that click from opening it.
+      if (popup) marker.unbindPopup();
+    });
+
+    marker.on('pm:dragend', () => {
+      if (popup) {
+        marker.bindPopup(popup);
+        popup = undefined;
+      }
+    });
+  }
+
 
   setupLayer (l:any, name:string, mac:string, id:string, floor_number:number) {
     // L.PM.reInitLayer(l);
@@ -583,6 +604,7 @@ export class LeafletMapService {
         }
       };
       l.bindPopup(this.createPopupFunction(leafletId, name, mac, id, floor_number) as any);
+      this.suppressPopupWhileDragging(l);
       l.bindTooltip(
         name, 
         {

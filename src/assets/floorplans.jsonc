@@ -37,6 +37,7 @@
       ],
     ],
     "zoom": 18,
+    "default": true,
   },
 
   // Add more floorplans here. Wrap an entry in a block comment to hide it.

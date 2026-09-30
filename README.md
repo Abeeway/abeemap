@@ -47,3 +47,31 @@ unused entries can remain commented out:
 Device EUIs are matched case-insensitively. The file is loaded at runtime, so
 it can also be replaced directly in a deployed app's `assets` folder without
 recompiling the application; reload the page to use the new values.
+
+## Floorplan overlays
+
+Floorplan images and their map placement are configured in
+`src/assets/floorplans.jsonc`:
+
+```jsonc
+[
+  {
+    "id": "actility-office",
+    "name": "Actility office",
+    "image": "assets/actility_floorplan.png",
+    "bounds": [
+      [48.87459, 2.33358],
+      [48.87488, 2.33413],
+    ],
+    "zoom": 19,
+    "default": true,
+  },
+]
+```
+
+Bounds are the southwest and northeast corners in `[latitude, longitude]`
+order. `zoom` is optional and defaults to 19. The first entry marked as
+`default` is selected initially; if none is marked, the first entry is used.
+Each entry automatically creates an image overlay and a corresponding map
+button. JSONC comments and trailing commas are supported; wrap an entire entry
+in `/* ... */` to temporarily remove its overlay and button.

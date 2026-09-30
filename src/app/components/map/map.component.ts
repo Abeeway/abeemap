@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
 import { FullScreen } from 'leaflet.fullscreen';
 
-import { LeafletMapService } from '../../services/leaflet-map.service';
+import { FloorplanConfig, LeafletMapService } from '../../services/leaflet-map.service';
 import { AppMaterialModule } from '../../app-material.module';
 
 @Component({
@@ -45,12 +45,8 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.map.remove();
   }
 
-  zoomToFloorplan01() { 
-    this.leafletMapService.zoomToFloorplan01(this.map) 
-  }
-
-  zoomToFloorplan02() { 
-    this.leafletMapService.zoomToFloorplan02(this.map) 
+  zoomToFloorplan(floorplan: FloorplanConfig) {
+    this.leafletMapService.zoomToFloorplan(this.map, floorplan);
   }
 
   zoomToBeacons() {

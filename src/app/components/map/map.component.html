@@ -1,14 +1,12 @@
 <div class="map-container">
   <div class="button-frame">
 
-    <button mat-raised-button (click)="zoomToFloorplan01()" class="control-button" matTooltip="Zoom to Floorplan #1">
-      <mat-icon>arrow_forward</mat-icon>
-      <mat-icon>dashboard</mat-icon>
-    </button>
-    <button mat-raised-button (click)="zoomToFloorplan02()" class="control-button" matTooltip="Zoom to Floorplan #2">
-      <mat-icon>arrow_forward</mat-icon>
-      <mat-icon>dashboard</mat-icon>
-    </button>
+    @for (floorplan of leafletMapService.floorplans; track floorplan.id) {
+      <button mat-raised-button (click)="zoomToFloorplan(floorplan)" class="control-button" [matTooltip]="'Zoom to ' + floorplan.name">
+        <mat-icon>arrow_forward</mat-icon>
+        <mat-icon>dashboard</mat-icon>
+      </button>
+    }
     <button mat-raised-button (click)="zoomToDevices()" class="control-button" matTooltip="Zoom to Tracked Objects">
       <mat-icon>arrow_forward</mat-icon>
       <mat-icon>person_pin_circle</mat-icon>

@@ -1,0 +1,43 @@
+[
+  // {
+  //   "id": "actility-office",
+  //   "name": "Actility office",
+  //   "image": "assets/actility_floorplan.png",
+  //   "bounds": [
+  //     [48.87459, 2.33358],
+  //     [48.87488, 2.33413],
+  //   ],
+  //   "zoom": 19,
+  //   "default": true,
+  // },
+  // {
+  //   "id": "orlando-hotel",
+  //   "name": "Orlando hotel",
+  //   "image": "assets/orlando_hotel_floor_plan.png",
+  //   "bounds": [
+  //     [28.480985, -81.46062],
+  //     [28.481921, -81.45947],
+  //   ],
+  //   "zoom": 19,
+  // },
+
+  {
+    "id": "automa",
+    "name": "Automa",
+    "image": "assets/automa_2026.png",
+    "bounds": [
+
+      [
+          52.257454,
+          4.688375,
+      ],
+      [
+          52.258848,
+          4.689869,
+      ],
+    ],
+    "zoom": 19,
+  },
+
+  // Add more floorplans here. Wrap an entry in a block comment to hide it.
+]

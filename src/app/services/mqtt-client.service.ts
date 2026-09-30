@@ -107,9 +107,8 @@ export class MqttClientService implements OnInit {
       delete msg.resolvedTracker;
 
       
-      
-      console.log(msg);
-
+      // DEBUGGING: Uncomment the following line to log all incoming messages to the console
+      // console.log(msg);
 
 
       this.message$.next(msg);

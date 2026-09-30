@@ -32,6 +32,15 @@ interface DeviceName {
 
 type DeviceNames = Record<string, DeviceName>;
 
+export interface FloorplanConfig {
+  id: string;
+  name: string;
+  image: string;
+  bounds: [[number, number], [number, number]];
+  zoom?: number;
+  default?: boolean;
+}
+
 
 const DEFAULT_ZOOM_LEVEL = 19;
 
@@ -63,7 +72,7 @@ const ICON_PERSON = L.icon({
 
 const ICON_PERSON_YELLOW = L.icon({
   iconRetinaUrl: ICONS_FOLDER + 'marker-icon-person-yellow-2x.png',
-  iconUrl: ICONS_FOLDER + 'marker-icon-person-yelllow-1x.png',
+  iconUrl: ICONS_FOLDER + 'marker-icon-person-yellow-1x.png',
   shadowUrl: ICONS_FOLDER + 'marker-icon-person-shadow.png',
   iconSize: [24, 33],
   iconAnchor: [12, 33],
@@ -145,34 +154,9 @@ const baseLayers = {
 
 
 
-const FLOORPLAN_IMAGE_URL_01 = './assets/actility_floorplan.png';
-const imageCoordinatesX_01 = 2.33358;
-const imageCoordinatesY_01 = 48.8745900;
-const imageHeight_01 = 0.00029;
-const imageWidth_01 = 0.00055;
-const FLOORPLAN_IMAGE_BOUNDS_01:any = [
-  [imageCoordinatesY_01, imageCoordinatesX_01], 
-  [imageCoordinatesY_01+imageHeight_01, imageCoordinatesX_01+imageWidth_01]
-];
 
-const FLOORPLAN_IMAGE_URL_02 = './assets/orlando_hotel_floor_plan.png';
-const imageCoordinatesX_02 = -81.46062;
-const imageCoordinatesY_02 = 28.480985;
-const imageHeight_02 = 0.000936;
-const imageWidth_02 = 0.00115;
-const FLOORPLAN_IMAGE_BOUNDS_02:any = [
-  [imageCoordinatesY_02, imageCoordinatesX_02], 
-  [imageCoordinatesY_02+imageHeight_02, imageCoordinatesX_02+imageWidth_02]
-];
 
-const floorplanImages = L.layerGroup([
-  L.imageOverlay(FLOORPLAN_IMAGE_URL_01, FLOORPLAN_IMAGE_BOUNDS_01),
-  L.imageOverlay( FLOORPLAN_IMAGE_URL_02, FLOORPLAN_IMAGE_BOUNDS_02),
-]);
 
-const baseOverlays = {
-  'Floorplan images': floorplanImages,
-};
 
 
 const DEFAULT_TPXLE_UL_TEXT = JSON.stringify(
@@ -207,6 +191,10 @@ export class LeafletMapService {
   private initialized = false;
   private markerAnimationFrames = new WeakMap<object, number>();
   private deviceNames: DeviceNames = {};
+  private floorplanImages = L.layerGroup();
+  private mapsWaitingForFloorplans = new Set<any>();
+
+  floorplans: FloorplanConfig[] = [];
 
   beaconMapInEditMode = false;
 
@@ -254,6 +242,7 @@ export class LeafletMapService {
     this.initialized = true;
 
     this.loadDeviceNames();
+    this.loadFloorplans();
     this.mqttClientService.locationUpdateMessage$.subscribe( (msg) => {
       this.updateDeviceMarker(msg);
     });
@@ -273,10 +262,13 @@ export class LeafletMapService {
 
         if (msg.age > 120) {
           icon = ICON_PERSON_GREY;
+        } else if (msg.uplinkPayload?.sosFlag === 1) {
+          icon = ICON_PERSON_YELLOW;
         } else {
           icon = ICON_PERSON;
         }
         this.devices[msg.deviceEUI].setIcon(icon);
+        this.devices[msg.deviceEUI].setPopupContent(this.getDevicePopupContent(msg));
 
         animateMarker(
           this.devices[msg.deviceEUI],
@@ -290,6 +282,8 @@ export class LeafletMapService {
         const t = ( (new Date()).getTime() - (new Date(msg.time)).getTime() ) / 1000;
         if (t>300) {
           icon = ICON_PERSON_GREY;
+        } else if (msg.uplinkPayload?.sosFlag === 1) {
+          icon = ICON_PERSON_YELLOW;
         } else {
           icon = ICON_PERSON;
         }
@@ -300,7 +294,7 @@ export class LeafletMapService {
           zIndexOffset: 1000,
           // title: msg.deviceEUI,
         });
-        this.devices[msg.deviceEUI].bindPopup(`DevEUI: ${msg.deviceEUI}<br />Time: ${msg.time}`).addTo(this.devicesFeatureGroup);
+        this.devices[msg.deviceEUI].bindPopup(this.getDevicePopupContent(msg)).addTo(this.devicesFeatureGroup);
         this.devices[msg.deviceEUI].bindTooltip(
           this.getDeviceName(msg.deviceEUI),
           {
@@ -311,6 +305,13 @@ export class LeafletMapService {
           }
         ).openTooltip();
       }
+  }
+
+  private getDevicePopupContent(msg: any): string {
+    const sosFlag = msg.uplinkPayload?.sosFlag;
+    const sosState = sosFlag === 1 ? 'ACTIVE' : sosFlag === 0 ? 'inactive' : 'unknown';
+
+    return `DevEUI: ${msg.deviceEUI}<br />Time: ${msg.time}<br />SOS: ${sosState}`;
   }
 
   private loadDeviceNames(): void {
@@ -366,12 +367,73 @@ export class LeafletMapService {
     return this.deviceNames[deviceEUI.toLowerCase()]?.name || deviceEUI.substring(12);
   }
 
+  private loadFloorplans(): void {
+    const url = new URL('assets/floorplans.jsonc', this.document.baseURI);
+    url.searchParams.set('v', Date.now().toString());
+
+    this.http.get(url.href, { responseType: 'text' }).subscribe({
+      next: (text) => {
+        const errors: ParseError[] = [];
+        const config = parse(text, errors, { allowTrailingComma: true });
+
+        if (errors.length > 0) {
+          const descriptions = errors.map((error) =>
+            `${printParseErrorCode(error.error)} at offset ${error.offset}`
+          );
+          console.error('Could not parse assets/floorplans.jsonc:', descriptions.join(', '));
+          return;
+        }
+
+        this.floorplans = this.parseFloorplans(config);
+        this.floorplanImages.clearLayers();
+        this.floorplans.forEach((floorplan) => {
+          const imageUrl = new URL(floorplan.image, this.document.baseURI).href;
+          this.floorplanImages.addLayer(L.imageOverlay(imageUrl, floorplan.bounds));
+        });
+
+        this.mapsWaitingForFloorplans.forEach((map) => this.setInitialFloorplan(map));
+        this.mapsWaitingForFloorplans.clear();
+      },
+      error: (error) => {
+        console.error('Could not load floorplans from assets/floorplans.jsonc', error);
+      },
+    });
+  }
+
+  private parseFloorplans(config: unknown): FloorplanConfig[] {
+    if (!Array.isArray(config)) {
+      console.error('assets/floorplans.jsonc must contain a JSON array');
+      return [];
+    }
+
+    return config.filter((value): value is FloorplanConfig => {
+      if (!value || typeof value !== 'object') return false;
+      const floorplan = value as Partial<FloorplanConfig>;
+      return typeof floorplan.id === 'string'
+        && typeof floorplan.name === 'string'
+        && typeof floorplan.image === 'string'
+        && this.isFloorplanBounds(floorplan.bounds)
+        && (floorplan.zoom === undefined || typeof floorplan.zoom === 'number')
+        && (floorplan.default === undefined || typeof floorplan.default === 'boolean');
+    });
+  }
+
+  private isFloorplanBounds(bounds: unknown): bounds is [[number, number], [number, number]] {
+    return Array.isArray(bounds)
+      && bounds.length === 2
+      && bounds.every((point) =>
+        Array.isArray(point)
+        && point.length === 2
+        && point.every((coordinate) => typeof coordinate === 'number')
+      );
+  }
+
 
   initMap(map:any) {
 
     map.addLayer(TILES_OSM);
     // map.addLayer(TILES_GOOGLE_SAT);
-    map.addLayer(floorplanImages);
+    map.addLayer(this.floorplanImages);
     map.addLayer(this.devicesFeatureGroup);
     map.addLayer(this.beaconsFeatureGroup);
     
@@ -380,16 +442,14 @@ export class LeafletMapService {
     // ],).toBounds(100);
     // map.fitBounds(bounds, {padding: [150, 150]});
 
-    map.fitBounds(FLOORPLAN_IMAGE_BOUNDS_01, {padding: [150, 150]});
-
-    map.setZoom(DEFAULT_ZOOM_LEVEL);
+    this.setInitialFloorplan(map);
     // map.setView({lat: 0, lng: 0}, DEFAULT_ZOOM_LEVEL);
     
     map.addControl(
       L.control.layers(baseLayers, {
         'Trackerd objects': this.devicesFeatureGroup,
         'Beacon map': this.beaconsFeatureGroup,
-        ...baseOverlays
+        'Floorplan images': this.floorplanImages,
       })
     );
 
@@ -403,18 +463,16 @@ export class LeafletMapService {
   initBluetoothMap(map:any) {
 
     map.addLayer(TILES_OSM);
-    map.addLayer(floorplanImages);
+    map.addLayer(this.floorplanImages);
     // map.addLayer(this.devicesFeatureGroup);
     map.addLayer(this.beaconsFeatureGroup);
-    map.fitBounds(FLOORPLAN_IMAGE_BOUNDS_01, {padding: [150, 150]});
-
-    map.setZoom(DEFAULT_ZOOM_LEVEL);
+    this.setInitialFloorplan(map);
     
     map.addControl(
       L.control.layers(baseLayers, {
         // 'Markers': this.devicesFeatureGroup,
         // 'Beacon map': this.beaconsFeatureGroup,
-        ...baseOverlays
+        'Floorplan images': this.floorplanImages,
       })
     );
 
@@ -425,28 +483,19 @@ export class LeafletMapService {
 
   }
 
-  zoomToFloorplan01(map:any) {
-    map.fitBounds(FLOORPLAN_IMAGE_BOUNDS_01, {padding: [150, 150]});
-    map.setZoom(DEFAULT_ZOOM_LEVEL);
-
-    map.setView([
-      (FLOORPLAN_IMAGE_BOUNDS_01[0][0] + FLOORPLAN_IMAGE_BOUNDS_01[1][0])/2, 
-      (FLOORPLAN_IMAGE_BOUNDS_01[0][1] + FLOORPLAN_IMAGE_BOUNDS_01[1][1])/2
-    ], DEFAULT_ZOOM_LEVEL);
-
-    // map.flyToBounds(FLOORPLAN_IMAGE_BOUNDS_01, {padding: [150, 150]});
+  private setInitialFloorplan(map: any): void {
+    const floorplan = this.floorplans.find((item) => item.default) || this.floorplans[0];
+    if (floorplan) {
+      this.zoomToFloorplan(map, floorplan);
+    } else {
+      map.setView([0, 0], 3);
+      this.mapsWaitingForFloorplans.add(map);
+    }
   }
 
-  zoomToFloorplan02(map:any) {
-    // map.fitBounds(FLOORPLAN_IMAGE_BOUNDS_02, {padding: [150, 150]});
-    // map.setZoom(DEFAULT_ZOOM_LEVEL);
-
-    map.setView([
-      (FLOORPLAN_IMAGE_BOUNDS_02[0][0] + FLOORPLAN_IMAGE_BOUNDS_02[1][0])/2, 
-      (FLOORPLAN_IMAGE_BOUNDS_02[0][1] + FLOORPLAN_IMAGE_BOUNDS_02[1][1])/2
-    ], DEFAULT_ZOOM_LEVEL);
-
-    // map.flyToBounds(FLOORPLAN_IMAGE_BOUNDS_02, {padding: [150, 150]});
+  zoomToFloorplan(map: any, floorplan: FloorplanConfig): void {
+    const center = L.latLngBounds(floorplan.bounds).getCenter();
+    map.setView(center, floorplan.zoom ?? DEFAULT_ZOOM_LEVEL);
   }
   
   zoomToBeacons(map:any) {

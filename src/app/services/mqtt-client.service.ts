@@ -105,6 +105,13 @@ export class MqttClientService implements OnInit {
       delete msg.processedFeed;
       delete msg.rawPosition;
       delete msg.resolvedTracker;
+
+      
+      
+      console.log(msg);
+
+
+
       this.message$.next(msg);
 
       if (msg.coordinates && msg.coordinates[0] && msg.coordinates[1]) {

@@ -1,0 +1,6 @@
+{
+  // Add device names in the following format:
+  // "20635F02410011FC": { "name": "Pia" },
+
+  "20635F0421000C1E": { "name": "Norbert" },
+}

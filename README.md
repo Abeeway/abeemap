@@ -31,3 +31,19 @@ manually from the workflow's **Run workflow** button.
 The deployment creates a `404.html` copy of the application shell so that
 direct links to Angular routes continue to work on GitHub Pages.
 
+## Device names
+
+Device display names can be configured in `src/assets/device-names.jsonc`.
+JSONC supports `//` comments and trailing commas, so examples or temporarily
+unused entries can remain commented out:
+
+```jsonc
+{
+  "20635F0421000C1E": { "name": "Norbert" },
+  // "20635F02410011FC": { "name": "Pia" },
+}
+```
+
+Device EUIs are matched case-insensitively. The file is loaded at runtime, so
+it can also be replaced directly in a deployed app's `assets` folder without
+recompiling the application; reload the page to use the new values.

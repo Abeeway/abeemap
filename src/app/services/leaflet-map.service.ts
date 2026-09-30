@@ -1,4 +1,5 @@
 import { DOCUMENT, Inject, Injectable, Injector } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 import { createCustomElement, NgElement, WithProperties } from '@angular/elements';
 import { MatSnackBar} from '@angular/material/snack-bar';
@@ -12,6 +13,7 @@ import { animateMarker } from './marker-animation';
 import * as L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
+import { parse, ParseError, printParseErrorCode } from 'jsonc-parser';
 
 
 
@@ -24,21 +26,11 @@ import { BeaconSettingsPopupComponent } from '../components/beacon-settings-popu
 
 
 
-const DEVICE_NAMES = {
-//   '20635f02410011e8': ["Mike", 'Actility'], // Hartree",
-//   '20635f02410011fc': ["Pia", 'Actility'], // Miranda",
-//   '20635f024100129c': ["Allan", 'Actility'], // Kjeldbjerg",
-//   '20635f0241001454': ["Alper", 'Actility'], // Yegin",
-//   '20635f024100145a': ["Sabrina", 'Actility'], // A.",
-//   '20635f0241001380': ["Amy", 'Actility'], // Garland",
-//   '20635f024100142c': ["Jeff", 'Actility'], // Martin",
-//   '20635f0241000b96': ["Markus", 'Actility'], // Ulsass",
-//   '20635f0241000b9a': ["Michael", 'Actility'], // Vierling",
-//   '20635f0241000b89': ["Violet", 'Actility'], // Su",
-//   '20635f0172000004': ['Alex', 'Actility'], 
-//   '20635f0172000006': ['Thior', 'Actility'],
-//   '20635f0241001429': ['1429', 'Actility'],
+interface DeviceName {
+  name: string;
 }
+
+type DeviceNames = Record<string, DeviceName>;
 
 
 const DEFAULT_ZOOM_LEVEL = 19;
@@ -214,6 +206,7 @@ export class LeafletMapService {
 
   private initialized = false;
   private markerAnimationFrames = new WeakMap<object, number>();
+  private deviceNames: DeviceNames = {};
 
   beaconMapInEditMode = false;
 
@@ -234,8 +227,9 @@ export class LeafletMapService {
 
 
   constructor(
-    @Inject(DOCUMENT) document:any,
+    @Inject(DOCUMENT) private document: Document,
     injector: Injector,
+    private http: HttpClient,
     private dxLocationApiService: DxLocationApiService,
     private snackBar: MatSnackBar,
     public dialog: MatDialog,
@@ -259,6 +253,7 @@ export class LeafletMapService {
     }
     this.initialized = true;
 
+    this.loadDeviceNames();
     this.mqttClientService.locationUpdateMessage$.subscribe( (msg) => {
       this.updateDeviceMarker(msg);
     });
@@ -269,8 +264,6 @@ export class LeafletMapService {
 
     let icon:any;
     
-    // if ((DEVICE_NAMES as any)[msg.deviceEUI]) {
-
       if (this.devices[msg.deviceEUI]) {
         // this.devices[msg.deviceEUI].setLatLng([msg.coordinates[1], msg.coordinates[0]]).update();
 
@@ -280,8 +273,6 @@ export class LeafletMapService {
 
         if (msg.age > 120) {
           icon = ICON_PERSON_GREY;
-        // } else if ( (DEVICE_NAMES as any)[msg.deviceEUI][1] == 'LoRa Alliance' ) {
-        //   icon = ICON_PERSON_YELLOW;
         } else {
           icon = ICON_PERSON;
         }
@@ -299,8 +290,6 @@ export class LeafletMapService {
         const t = ( (new Date()).getTime() - (new Date(msg.time)).getTime() ) / 1000;
         if (t>300) {
           icon = ICON_PERSON_GREY;
-        // } else if ( (DEVICE_NAMES as any)[msg.deviceEUI][1] == 'LoRa Alliance' ) {
-        //   icon = ICON_PERSON_YELLOW;
         } else {
           icon = ICON_PERSON;
         }
@@ -313,8 +302,7 @@ export class LeafletMapService {
         });
         this.devices[msg.deviceEUI].bindPopup(`DevEUI: ${msg.deviceEUI}<br />Time: ${msg.time}`).addTo(this.devicesFeatureGroup);
         this.devices[msg.deviceEUI].bindTooltip(
-          (DEVICE_NAMES as any)[msg.deviceEUI] ? (DEVICE_NAMES as any)[msg.deviceEUI][0] : msg.deviceEUI.substring(12), 
-          // msg.deviceEUI.substring(12),
+          this.getDeviceName(msg.deviceEUI),
           {
             permanent: true, 
             opacity: 0.75,
@@ -323,7 +311,59 @@ export class LeafletMapService {
           }
         ).openTooltip();
       }
-    // }
+  }
+
+  private loadDeviceNames(): void {
+    const url = new URL('assets/device-names.jsonc', this.document.baseURI);
+    url.searchParams.set('v', Date.now().toString());
+
+    this.http.get(url.href, { responseType: 'text' }).subscribe({
+      next: (text) => {
+        const errors: ParseError[] = [];
+        const deviceNames = parse(text, errors, { allowTrailingComma: true });
+
+        if (errors.length > 0) {
+          const descriptions = errors.map((error) =>
+            `${printParseErrorCode(error.error)} at offset ${error.offset}`
+          );
+          console.error('Could not parse assets/device-names.jsonc:', descriptions.join(', '));
+          return;
+        }
+
+        this.deviceNames = this.parseDeviceNames(deviceNames);
+
+        Object.entries(this.devices).forEach(([deviceEUI, marker]: [string, any]) => {
+          marker.getTooltip()?.setContent(this.getDeviceName(deviceEUI));
+        });
+      },
+      error: (error) => {
+        console.error('Could not load device names from assets/device-names.jsonc', error);
+      },
+    });
+  }
+
+  private parseDeviceNames(config: unknown): DeviceNames {
+    if (!config || typeof config !== 'object' || Array.isArray(config)) {
+      console.error('assets/device-names.jsonc must contain a JSON object');
+      return {};
+    }
+
+    const deviceNames: DeviceNames = {};
+
+    Object.entries(config).forEach(([deviceEUI, value]) => {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const name = (value as { name?: unknown }).name;
+        if (typeof name === 'string') {
+          deviceNames[deviceEUI.toLowerCase()] = { name };
+        }
+      }
+    });
+
+    return deviceNames;
+  }
+
+  private getDeviceName(deviceEUI: string): string {
+    return this.deviceNames[deviceEUI.toLowerCase()]?.name || deviceEUI.substring(12);
   }
 
 

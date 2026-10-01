@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, AfterViewInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 
 // import { Inject }  from '@angular/core';
 // import { DOCUMENT } from '@angular/common';
@@ -23,7 +23,8 @@ import { AppMaterialModule } from '../../app-material.module';
 })
 export class BluetoothMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  private map: any;
+  @ViewChild('mapContainer') private mapContainer!: ElementRef<HTMLDivElement>;
+  private map?: L.Map;
 
   constructor(
     // @Inject(DOCUMENT) document:any,
@@ -38,21 +39,15 @@ export class BluetoothMapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-
-    setTimeout( () => {
-     
-      this.map = L.map('map');
-      this.map.addControl(new FullScreen({ position: 'topleft' }));
-      this.leafletMapService.initBluetoothMap(this.map);
-
-    }, 100)
-
-   }
+    this.map = L.map(this.mapContainer.nativeElement);
+    this.map.addControl(new FullScreen({ position: 'topleft' }));
+    this.leafletMapService.initBluetoothMap(this.map);
+  }
 
   ngOnDestroy(): void {
-    this.map.off();
-    this.map.remove();
-    // (document.getElementById('map-container') as HTMLElement).innerHTML = '';
+    this.map?.remove();
+    this.map?.off();
+    this.map = undefined;
   }
 
   getBluetoothMap() { 
@@ -95,11 +90,11 @@ export class BluetoothMapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   
   exportMap() {
-    this.leafletMapService.exportMap(this.map)
+    if (this.map) this.leafletMapService.exportMap(this.map);
   }
 
   zoomToBeacons() {
-    this.leafletMapService.zoomToBeacons(this.map)
+    if (this.map) this.leafletMapService.zoomToBeacons(this.map);
   }
 
 }

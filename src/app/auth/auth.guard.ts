@@ -39,7 +39,7 @@ export const canActivate: CanActivateFn = (actdRoute: ActivatedRouteSnapshot, rt
 
     return false;
     
-  } else if (authService.loggedIn) {
+  } else if (authService.isAuthenticated()) {
 
     return true;
 

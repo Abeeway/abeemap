@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, AfterViewInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import * as L from 'leaflet';
@@ -17,7 +17,8 @@ import { AppMaterialModule } from '../../app-material.module';
 })
 export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  private map: any;
+  @ViewChild('mapContainer') private mapContainer!: ElementRef<HTMLDivElement>;
+  private map?: L.Map;
 
   constructor(
     public leafletMapService: LeafletMapService,
@@ -28,33 +29,28 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.leafletMapService.initialize();
   }
 
-  ngAfterViewInit(): void { 
-
-    setTimeout( () => {
-
-      this.map = L.map('map');
-      this.map.addControl(new FullScreen({ position: 'topleft' }));
-      this.leafletMapService.initMap(this.map);
-
-    }, 300)
-
+  ngAfterViewInit(): void {
+    this.map = L.map(this.mapContainer.nativeElement);
+    this.map.addControl(new FullScreen({ position: 'topleft' }));
+    this.leafletMapService.initMap(this.map);
   }
 
   ngOnDestroy(): void {
-    this.map.off();
-    this.map.remove();
+    this.map?.remove();
+    this.map?.off();
+    this.map = undefined;
   }
 
   zoomToFloorplan(floorplan: FloorplanConfig) {
-    this.leafletMapService.zoomToFloorplan(this.map, floorplan);
+    if (this.map) this.leafletMapService.zoomToFloorplan(this.map, floorplan);
   }
 
   zoomToBeacons() {
-    this.leafletMapService.zoomToBeacons(this.map)
+    if (this.map) this.leafletMapService.zoomToBeacons(this.map);
   }
 
   zoomToDevices() {
-    this.leafletMapService.zoomToDevices(this.map)
+    if (this.map) this.leafletMapService.zoomToDevices(this.map);
   }
 
 }

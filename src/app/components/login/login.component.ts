@@ -1,11 +1,15 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 
-import { ActivatedRoute, Router, UrlTree } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
-// import { AuthService } from '../../auth/auth.service';
+import { AuthService } from '../../auth/auth.service';
+import { getLoginReturnUrl } from '../../auth/login-return-url';
+import { generateState } from '../../auth/auth-tools.module';
 import { DxAdminApiService } from '../../services/dx-admin-api.service';
 import { KeycloakApiService } from '../../services/keycloak-api.service';
+import { getApiErrorMessage, isAuthenticationError } from '../../services/service-utils.service';
 import { MatSnackBar} from '@angular/material/snack-bar';
 
 // import { jwtDecode } from 'jwt-decode';
@@ -37,9 +41,9 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    // private router: Router,
+    @Inject(DOCUMENT) private document: Document,
     private fb: UntypedFormBuilder,
-    // private authService: AuthService,
+    private authService: AuthService,
     private dxAdminApiService: DxAdminApiService,
     private keycloakApiService: KeycloakApiService,
     private snackBar: MatSnackBar,
@@ -62,6 +66,14 @@ export class LoginComponent implements OnInit {
     this.clientId = qp.client_id || '';
     this.scope = qp.scope || '';
     this.state = qp.state || '';
+
+    // Opening /login directly is a local sign-in, rather than a callback from
+    // AuthService.login(). Create the same state handshake for this entry point.
+    if (qp.redirect_uri === undefined && qp.state === undefined) {
+      this.redirectUri = new URL('map', this.document.baseURI).href;
+      this.state = generateState();
+      sessionStorage.setItem('state_' + CONFIG.client_id, this.state);
+    }
   }
 
   isFieldInvalid(name: string) {
@@ -73,6 +85,20 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit() { 
+    this.formSubmitAttempt = true;
+    const returnUrl = getLoginReturnUrl(this.redirectUri, this.document.baseURI);
+    const state = this.state;
+    if (!returnUrl || !state
+      || state !== sessionStorage.getItem('state_' + CONFIG.client_id)) {
+      const message = returnUrl
+        ? 'This login link has expired. Start again to sign in.'
+        : 'This login link cannot return to this application. Start again to sign in.';
+      this.snackBar.open(message, 'Start again', {
+        panelClass: ['red-snackbar'],
+      }).onAction().subscribe(() => this.authService.login());
+      return;
+    }
+
     if (this.form.valid) {
       this.platformSelector = this.form.get('platformSelector')?.value;
       this.userName = this.form.get('userName')?.value;
@@ -107,19 +133,14 @@ export class LoginComponent implements OnInit {
                 sessionStorage.setItem('mqtttop_' + CONFIG.client_id, mqttTopic);
                 sessionStorage.setItem('platform_' + CONFIG.client_id, this.platformSelector);
 
-                const parsedRedirectUri = new URL(this.redirectUri);
-                parsedRedirectUri.searchParams.append('access_token', data.access_token);
-                parsedRedirectUri.searchParams.append('state', this.state);
-                setTimeout(
-                  () => { window.location.href = parsedRedirectUri.href; },
-                  500
-                );
+                this.finishLogin(data.access_token, state, returnUrl);
 
               }
             },
             error => {
+              if (isAuthenticationError(error)) return;
               this.snackBar.open(
-                'ERROR: ' + JSON.stringify(error.error),
+                'ERROR: ' + getApiErrorMessage(error),
                 'x', {
                   panelClass: ['red-snackbar'],
                 }
@@ -152,19 +173,14 @@ export class LoginComponent implements OnInit {
                 sessionStorage.setItem('mqtttop_' + CONFIG.client_id, mqttTopic);
                 sessionStorage.setItem('platform_' + CONFIG.client_id, this.platformSelector);
 
-                const parsedRedirectUri = new URL(this.redirectUri);
-                parsedRedirectUri.searchParams.append('access_token', data.access_token);
-                parsedRedirectUri.searchParams.append('state', this.state);
-                setTimeout(
-                  () => { window.location.href = parsedRedirectUri.href; },
-                  500
-                );
+                this.finishLogin(data.access_token, state, returnUrl);
 
               }
             },
             error => {
+              if (isAuthenticationError(error)) return;
               this.snackBar.open(
-                'ERROR: ' + JSON.stringify(error.error),
+                'ERROR: ' + getApiErrorMessage(error),
                 'x', {
                   panelClass: ['red-snackbar'],
                 }
@@ -176,7 +192,18 @@ export class LoginComponent implements OnInit {
       }
 
     }
-    this.formSubmitAttempt = true;
+  }
+
+  private finishLogin(token: string, state: string, returnUrl: URL): void {
+    if (this.authService.setSession(token, state)) {
+      // Reload to initialize MQTT/log services from the stored session. The token
+      // stays in session storage rather than travelling in the return URL.
+      this.document.location.assign(returnUrl.href);
+    } else {
+      this.snackBar.open('The server returned an invalid or expired session. Please sign in again.', 'x', {
+        panelClass: ['red-snackbar'],
+      });
+    }
   }
 
   clearMQTTAPIKey() {

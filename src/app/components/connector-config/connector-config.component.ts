@@ -4,6 +4,7 @@ import { Location } from '@angular/common';
 import { MatSnackBar} from '@angular/material/snack-bar';
 
 import { DxLocationApiService } from '../../services/dx-location-api.service';
+import { getApiErrorMessage, isAuthenticationError } from '../../services/service-utils.service';
 
 import { CONFIG } from '../../../environments/environment';
 
@@ -90,8 +91,10 @@ export class ConnectorConfigComponent implements OnInit {
   }
 
   reportError(error:any) {
+    // The API error handler owns the authentication snackbar and its action.
+    if (isAuthenticationError(error)) return;
     this.snackBar.open(
-      'ERROR: ' + JSON.stringify(error.error),
+      'ERROR: ' + getApiErrorMessage(error),
       'x', {
         panelClass: ['red-snackbar'],
       }

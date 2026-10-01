@@ -1,6 +1,6 @@
 import { CONFIG } from '../../environments/environment';
 
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
 
@@ -11,7 +11,9 @@ import {
 @Injectable({
   providedIn: 'root'
 })
-export class AuthService {
+export class AuthService implements OnDestroy {
+
+  private expiryTimer?: ReturnType<typeof setTimeout>;
 
   token: string|undefined = undefined;
 
@@ -77,34 +79,39 @@ export class AuthService {
 
       const state1 = sessionStorage.getItem('state_' + CONFIG.client_id);
 
-      if (state1) {
-        sessionStorage.removeItem('state_' + CONFIG.client_id);
-      } else {
+      if (!state1 || state !== state1) {
         return false;
       }
 
-      if (state !== state1) {
-        return false;
-      }
+    }
 
+    let decodedToken: { exp?: unknown; client_id?: string; preferred_username?: string; scope?: string };
+    try {
+      decodedToken = jwtDecode(token);
+    } catch {
+      this.deleteSession();
+      return false;
+    }
+
+    const expiry = decodedToken?.exp;
+    if (typeof expiry !== 'number' || !Number.isFinite(expiry)
+      || !Number.isFinite(expiry * 1000) || expiry * 1000 > 8640000000000000
+      || expiry * 1000 <= Date.now()) {
+      this.deleteSession();
+      return false;
     }
 
     this.platform = sessionStorage.getItem('platform_' + CONFIG.client_id) || 'PREVDX';
     this.subscriberId = sessionStorage.getItem('mqttsbs_' + CONFIG.client_id);
     this.mqttUserName = sessionStorage.getItem('mqttusr_' + CONFIG.client_id);
-    this.mqttTopic =  sessionStorage.getItem('mqtttop_' + CONFIG.client_id);
+    this.mqttTopic = sessionStorage.getItem('mqtttop_' + CONFIG.client_id);
     this.mqttPassword = localStorage.getItem('mqttpwd_' + CONFIG.client_id);
-
-    const decodedToken: any = jwtDecode(token);
-    if (!decodedToken) {
-      return false;
-    }
 
     this.token = token;
 
     // this.iss = decodedToken.iss;
     // this.iat = +decodedToken.iat;
-    this.exp = +decodedToken.exp;
+    this.exp = expiry;
     this.userId = decodedToken.client_id || decodedToken.preferred_username;
     this.scope = decodedToken.scope;
     // this.customerId = +decodedToken.customerId;
@@ -113,16 +120,21 @@ export class AuthService {
     // this.loggedInAsAdmin = ( this.roles.indexOf('admin') !== -1 );
 
     if (state) {
+      sessionStorage.removeItem('state_' + CONFIG.client_id);
       sessionStorage.setItem('access_token_' + CONFIG.client_id, this.token);
     }
 
     this.setLoggedIn(true);
+    this.scheduleExpiry();
 
     return true;
 
   }
 
   deleteSession() {
+
+    clearTimeout(this.expiryTimer);
+    this.expiryTimer = undefined;
 
     this.token = undefined;
 
@@ -156,6 +168,31 @@ export class AuthService {
   setLoggedIn(value: boolean) {
     this.loggedIn$.next(value);
     this.loggedIn = value;
+  }
+
+  isAuthenticated(): boolean {
+    if (!this.loggedIn) return false;
+    if (!this.token || typeof this.exp !== 'number' || !Number.isFinite(this.exp)
+      || this.exp * 1000 <= Date.now()) {
+      this.deleteSession();
+      return false;
+    }
+    return true;
+  }
+
+  private scheduleExpiry(): void {
+    clearTimeout(this.expiryTimer);
+    const remaining = (this.exp || 0) * 1000 - Date.now();
+    // Browser timers overflow past approximately 24.8 days. Recheck long-lived
+    // sessions in chunks, using the clock again when a suspended tab resumes.
+    this.expiryTimer = setTimeout(() => {
+      if (this.isAuthenticated()) this.scheduleExpiry();
+      else this.login(window.location.href);
+    }, Math.min(Math.max(remaining, 0), 2147483647));
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.expiryTimer);
   }
 
 

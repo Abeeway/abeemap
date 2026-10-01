@@ -6,6 +6,7 @@ import { MatSnackBar} from '@angular/material/snack-bar';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TextareaDialogComponent } from '../components/textarea-dialog/textarea-dialog.component'
 import { DxLocationApiService } from './dx-location-api.service';
+import { getApiErrorMessage, isAuthenticationError } from './service-utils.service';
 
 import { MqttClientService } from './mqtt-client.service';
 import { animateMarker } from './marker-animation';
@@ -192,7 +193,7 @@ export class LeafletMapService {
   private markerAnimationFrames = new WeakMap<object, number>();
   private deviceNames: DeviceNames = {};
   private floorplanImages = L.layerGroup();
-  private mapsWaitingForFloorplans = new Set<any>();
+  private mapsWaitingForFloorplans = new Set<L.Map>();
 
   floorplans: FloorplanConfig[] = [];
 
@@ -489,7 +490,10 @@ export class LeafletMapService {
       this.zoomToFloorplan(map, floorplan);
     } else {
       map.setView([0, 0], 3);
-      this.mapsWaitingForFloorplans.add(map);
+      if (!this.mapsWaitingForFloorplans.has(map)) {
+        this.mapsWaitingForFloorplans.add(map);
+        map.once('unload', () => this.mapsWaitingForFloorplans.delete(map));
+      }
     }
   }
 
@@ -712,7 +716,7 @@ export class LeafletMapService {
         this.setBluetoothMap();
       },
       (error:any) => { console.log(error);
-        if (error.error.code == 404) {
+        if (error.status === 404) {
           this.setBluetoothMap();
         } else {
           this.reportError(error);
@@ -764,8 +768,9 @@ export class LeafletMapService {
   }
 
   reportError(error:any) {
+    if (isAuthenticationError(error)) return;
     this.snackBar.open(
-      'ERROR: ' + JSON.stringify(error.error),
+      'ERROR: ' + getApiErrorMessage(error),
       'x', {
         panelClass: ['red-snackbar'],
       }

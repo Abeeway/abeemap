@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 
-import { LogsService } from '../../services/logs.service';
+import { LogMessage, LogsService } from '../../services/logs.service';
 
 @Component({
     selector: 'app-logs',
@@ -27,7 +27,7 @@ export class LogsComponent implements OnInit {
     // 'payload',
   ];
 
-  locationUpdateLogs: Subject<any>;
+  readonly locationUpdateLogs: Observable<readonly LogMessage[]>;
 
   isLoading = false;
  

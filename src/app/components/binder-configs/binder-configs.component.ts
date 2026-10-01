@@ -4,6 +4,7 @@ import { MatSnackBar} from '@angular/material/snack-bar';
 
 import { AlertDialogComponent } from '../alert-dialog/alert-dialog.component';
 import { DxLocationApiService } from '../../services/dx-location-api.service';
+import { getApiErrorMessage, isAuthenticationError } from '../../services/service-utils.service';
 
 @Component({
     selector: 'app-binder-configs',
@@ -86,8 +87,10 @@ export class BinderConfigsComponent implements OnInit {
   }
 
   reportError(error:any) {
+    // The API error handler owns the authentication snackbar and its action.
+    if (isAuthenticationError(error)) return;
     this.snackBar.open(
-      'ERROR: ' + JSON.stringify(error.error),
+      'ERROR: ' + getApiErrorMessage(error),
       'x', {
         panelClass: ['red-snackbar'],
       }

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 
 import { AuthService } from '../../auth/auth.service';
@@ -15,6 +15,8 @@ import { MqttClientService } from '../../services/mqtt-client.service';
 })
 export class NavigationComponent  implements OnInit, OnDestroy {
 
+  private subscriptions = new Subscription();
+
   title = 'AbeeMap';
   userId: string|undefined = '';
 
@@ -24,7 +26,7 @@ export class NavigationComponent  implements OnInit, OnDestroy {
   isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
     .pipe(
       map(result => result.matches),
-      shareReplay()
+      shareReplay({ bufferSize: 1, refCount: true })
     );
 
   constructor(
@@ -34,27 +36,27 @@ export class NavigationComponent  implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    this.isHandset$.subscribe( (isHandset) => {
+    this.subscriptions.add(this.isHandset$.subscribe( (isHandset) => {
       this.isHandset = isHandset;
-    });
-    this.authService.loggedIn$.subscribe( loggedIn => {
+    }));
+    this.subscriptions.add(this.authService.loggedIn$.subscribe( loggedIn => {
       if (loggedIn) {
         this.userId = this.authService.userId;
       } else {
         this.userId = '';
       }
-    });
-    this.mqttClientService.connected$.subscribe( connected => {
+    }));
+    this.subscriptions.add(this.mqttClientService.connected$.subscribe( connected => {
       if (connected) {
         this.mqttConnected = true;
       } else {
         this.mqttConnected = false;
       }
-    });
+    }));
   }
 
   ngOnDestroy() {
-    this.authService.loggedIn$.unsubscribe();
+    this.subscriptions.unsubscribe();
   }
 
   sidenavClose(sidenav: any) {
@@ -74,7 +76,7 @@ export class NavigationComponent  implements OnInit, OnDestroy {
   }
 
   mqttToggle() {
-    if (this.mqttClientService.connected$.getValue()) {
+    if (this.mqttClientService.connectionActive) {
       this.mqttClientService.disconnect();
     } else {
       this.mqttClientService.connect();

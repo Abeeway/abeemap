@@ -5,6 +5,7 @@ import { MatSnackBar} from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 
 import { DxLocationApiService } from '../../services/dx-location-api.service';
+import { getApiErrorMessage, isAuthenticationError } from '../../services/service-utils.service';
 
 import { PopupDialogComponent } from '../popup-dialog/popup-dialog.component';
 
@@ -115,8 +116,10 @@ export class ApiKeyComponent implements OnInit {
   }
 
   reportError(error:any) {
+    // The API error handler owns the authentication snackbar and its action.
+    if (isAuthenticationError(error)) return;
     this.snackBar.open(
-      'ERROR: ' + JSON.stringify(error.error),
+      'ERROR: ' + getApiErrorMessage(error),
       'x', {
         panelClass: ['red-snackbar'],
       }

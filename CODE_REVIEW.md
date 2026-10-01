@@ -27,18 +27,19 @@ development login URLs use the current application base URL rather than a
 hardcoded host/port. Invalid or expired links offer a fresh local login through
 the "Start again" action while retaining return-URL and callback state validation.
 
-### 2. High: Leaflet renders external values as HTML
+### 2. Fixed: Leaflet rendered external values as HTML
 
-[`leaflet-map.service.ts:314`](src/app/services/leaflet-map.service.ts#L314)
-interpolates MQTT `deviceEUI` and `time` into popup HTML. Device names and imported
-beacon names also reach string tooltips (lines 298 and 608). Leaflet's installed
-`DivOverlay` implementation assigns strings to `innerHTML`; Angular's template
-escaping does not apply here. HTML containing event handlers can execute if an
-untrusted message or imported/configured name reaches these paths.
+The original map interpolated MQTT fields into popup HTML and passed external
+device/beacon names to Leaflet string tooltips. Leaflet interpreted those strings
+as HTML outside Angular's template escaping, permitting injected elements and
+event handlers from untrusted messages, imports, or configured names.
 
-Create popup/tooltip DOM nodes and assign external values with `textContent`.
-Validate MQTT fields and GeoJSON properties. Test that HTML-like names and message
-fields appear as literal text and create no executable elements.
+[`leaflet-map.service.ts`](src/app/services/leaflet-map.service.ts) now builds
+device popup DOM nodes using text nodes and explicit line breaks. Device and
+beacon tooltips use `textContent` at creation, late configuration loading, and
+rename/update paths. MQTT display fields and imported beacon name types are
+checked before rendering. Browser regression tests confirm HTML-like fields and
+names remain literal text and produce no injected executable elements.
 
 ### 3. Fixed: expired sessions remained authenticated and malformed JWTs crashed restoration
 

@@ -201,7 +201,7 @@ export class LeafletMapService {
 
   beaconsFeatureGroup = L.featureGroup();
   devicesFeatureGroup = L.featureGroup();
-  devices:any = {};
+  devices:any = Object.create(null);
   
   geojsonFile:any;
 
@@ -252,6 +252,10 @@ export class LeafletMapService {
 
   updateDeviceMarker(msg:any) {
 
+    if (!msg || typeof msg.deviceEUI !== 'string' || !msg.deviceEUI.trim()) return;
+    if (msg.time !== undefined && typeof msg.time !== 'string'
+      && (typeof msg.time !== 'number' || !Number.isFinite(msg.time))) return;
+
     let icon:any;
     
       if (this.devices[msg.deviceEUI]) {
@@ -297,7 +301,7 @@ export class LeafletMapService {
         });
         this.devices[msg.deviceEUI].bindPopup(this.getDevicePopupContent(msg)).addTo(this.devicesFeatureGroup);
         this.devices[msg.deviceEUI].bindTooltip(
-          this.getDeviceName(msg.deviceEUI),
+          this.createTextContent(this.getDeviceName(msg.deviceEUI)),
           {
             permanent: true, 
             opacity: 0.75,
@@ -308,11 +312,25 @@ export class LeafletMapService {
       }
   }
 
-  private getDevicePopupContent(msg: any): string {
+  private createTextContent(text: string): HTMLSpanElement {
+    const content = this.document.createElement('span');
+    content.textContent = text;
+    return content;
+  }
+
+  private getDevicePopupContent(msg: any): HTMLDivElement {
     const sosFlag = msg.uplinkPayload?.sosFlag;
     const sosState = sosFlag === 1 ? 'ACTIVE' : sosFlag === 0 ? 'inactive' : 'unknown';
 
-    return `DevEUI: ${msg.deviceEUI}<br />Time: ${msg.time}<br />SOS: ${sosState}`;
+    const content = this.document.createElement('div');
+    content.append(
+      this.document.createTextNode(`DevEUI: ${msg.deviceEUI}`),
+      this.document.createElement('br'),
+      this.document.createTextNode(`Time: ${msg.time ?? ''}`),
+      this.document.createElement('br'),
+      this.document.createTextNode(`SOS: ${sosState}`),
+    );
+    return content;
   }
 
   private loadDeviceNames(): void {
@@ -335,7 +353,7 @@ export class LeafletMapService {
         this.deviceNames = this.parseDeviceNames(deviceNames);
 
         Object.entries(this.devices).forEach(([deviceEUI, marker]: [string, any]) => {
-          marker.getTooltip()?.setContent(this.getDeviceName(deviceEUI));
+          marker.getTooltip()?.setContent(this.createTextContent(this.getDeviceName(deviceEUI)));
         });
       },
       error: (error) => {
@@ -610,7 +628,7 @@ export class LeafletMapService {
       l.bindPopup(this.createPopupFunction(leafletId, name, mac, id, floor_number) as any);
       this.suppressPopupWhileDragging(l);
       l.bindTooltip(
-        name, 
+        this.createTextContent(name),
         {
           permanent: true, 
           opacity: 0.5,
@@ -632,7 +650,7 @@ export class LeafletMapService {
       .setContent(this.createPopupFunction(leafletId, name, mac, id, floor_number) as any)
       .update();
     m.getTooltip()
-      .setContent(name)
+      .setContent(this.createTextContent(name))
       .update();
   }
 
@@ -659,8 +677,8 @@ export class LeafletMapService {
 
             layer.setIcon(ICON_BLE_BEACON);
 
-            if (feature.properties === undefined) throw new Error('Missing "properties" property from "feature"!');
-            if (feature.properties.name === undefined) throw new Error('Missing "name" property from "properties"!');
+            if (!feature.properties) throw new Error('Missing "properties" property from "feature"!');
+            if (typeof feature.properties.name !== 'string') throw new Error('The "name" property must be a string!');
             if ((feature.properties.mac === undefined) && (feature.properties.id === undefined)) throw new Error('Either "mac" or "id" property must be specified in "properties"!');
             if ((feature.properties.mac !== '') && (feature.properties.id !== '')) throw new Error('Either "mac" or "id" properties must be specified. It is not allowed to define both!');
             

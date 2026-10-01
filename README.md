@@ -12,10 +12,15 @@ npm ci
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
 ## Build
-Run `ng build --build-optimizer --base-href /abeemap/` to build the project.  
-The build artifacts will be stored in the `dist/` directory.
+Run `npm run build` to build the project for production with the `/abeemap/` base href.
+The build artifacts will be stored in the `dist/abeemap/` directory.
 Configure your web-server so that index.html is served from the `/abeemap` resource path.  
 E.g.: `https://example.com/abeemap`
+
+Roboto and Material Icons are served locally from `src/assets/fonts/`, with
+their license notices included. Once dependencies are installed, building the
+app does not require fetching fonts from Google Fonts. The browser also loads
+the fonts from the same server as the app.
 
 ## GitHub Pages
 

@@ -164,9 +164,9 @@ scrolling would reduce rendering costs if the retained-message limit increases.
   the HTTP satellite tile URL with HTTPS.
 - Run `npm run test:ci` before deploying in the Pages workflow. Current tests cover
   only auth happy paths/state mismatch, MQTT parsing, and marker animation.
-- Update the README build command to `npm run build`; its `--build-optimizer`
-  command is inconsistent with the configured application builder. Consider
-  serving fonts locally for builds that do not depend on external font retrieval.
+- Fixed: the README now uses `npm run build` and documents `dist/abeemap/`.
+  Roboto and Material Icons are bundled locally with upstream licenses, removing
+  external font retrieval from production builds and browser font loading.
 
 ## Validation
 

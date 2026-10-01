@@ -129,4 +129,4 @@ export const CONFIG:any = {
 
 
 // Building for production platform:
-// ng build --build-optimizer --base-href /abeemap/
+// npm run build

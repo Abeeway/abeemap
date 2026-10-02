@@ -2,7 +2,21 @@
   // Add device names in the following format:
   // "20635F02410011FC": { "name": "Pia" },
 
-  "20635F0421000C1E": { "name": "Norbert" },
   "20635f0421001325": { "name": "Andreas" },
-  "20635F042100130B": { "name": "Fabien" }
+  "20635F042100130B": { "name": "Fabien" },
+  "20635F0421000C1E": { "name": "Norbert" },
+  "20635F0421001325": { "name": "Andreas" },
+  "20635F0421001134": { "name": "Marco" },
+  "20635F042100139D": { "name": "Federico" },
+  "20635F042100112D": { "name": "Guest 01" },
+  "20635F0421001300": { "name": "Guest 02" },
+  "20635F0421001306": { "name": "Guest 03" },
+  "20635F042100146A": { "name": "Guest 04" },
+  "20635F042100136B": { "name": "Guest 05" },
+  "20635F042100133E": { "name": "Guest 06" },
+  "20635F0421001322": { "name": "Guest 07" },
+  "20635F04210013A0": { "name": "Guest 08" },
+  "20635F042100139F": { "name": "Guest 09" },
+  "20635F04210013DE": { "name": "Guest 10" },
+
 }

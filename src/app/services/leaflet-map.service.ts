@@ -45,7 +45,7 @@ export interface FloorplanConfig {
 
 const DEFAULT_ZOOM_LEVEL = 19;
 
-const ICONS_FOLDER = './assets/';
+const ICONS_FOLDER = './assets/icons/';
 
 const ICON_BLE_BEACON = L.icon({
   // iconRetinaUrl: ICONS_FOLDER + 'bluetooth.png',

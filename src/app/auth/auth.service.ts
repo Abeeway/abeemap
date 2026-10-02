@@ -3,6 +3,7 @@ import { CONFIG } from '../../environments/environment';
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
+import { clearSessionMqttApiKey, readMqttApiKey } from './mqtt-api-key-storage';
 
 import {
   setCookie, getCookie, deleteCookie, generateState, getQueryParams,
@@ -105,7 +106,7 @@ export class AuthService implements OnDestroy {
     this.subscriberId = sessionStorage.getItem('mqttsbs_' + CONFIG.client_id);
     this.mqttUserName = sessionStorage.getItem('mqttusr_' + CONFIG.client_id);
     this.mqttTopic = sessionStorage.getItem('mqtttop_' + CONFIG.client_id);
-    this.mqttPassword = localStorage.getItem('mqttpwd_' + CONFIG.client_id);
+    this.mqttPassword = readMqttApiKey();
 
     this.token = token;
 
@@ -159,7 +160,8 @@ export class AuthService implements OnDestroy {
     sessionStorage.removeItem('mqttsbs_' + CONFIG.client_id);
     sessionStorage.removeItem('mqttusr_' + CONFIG.client_id);
     sessionStorage.removeItem('mqtttop_' + CONFIG.client_id);
-    // localStorage.removeItem('mqttpwd_' + CONFIG.client_id);
+    // Keep opted-in keys across logout; session-only keys end with the session.
+    clearSessionMqttApiKey();
 
     this.setLoggedIn(false);
 

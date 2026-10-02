@@ -19,6 +19,8 @@ describe('LoginComponent return handling', () => {
   let restart: Subject<void>;
 
   beforeEach(() => {
+    localStorage.removeItem('remember_mqttpwd_' + CONFIG.client_id);
+    sessionStorage.removeItem('mqttpwd_' + CONFIG.client_id);
     sessionStorage.setItem('state_' + CONFIG.client_id, 'expected-state');
     auth = jasmine.createSpyObj<AuthService>('AuthService', ['setSession', 'login']);
     auth.setSession.and.returnValue(true);
@@ -50,9 +52,11 @@ describe('LoginComponent return handling', () => {
       sessionStorage.removeItem(key + '_' + CONFIG.client_id);
     }
     localStorage.removeItem('mqttpwd_' + CONFIG.client_id);
+    localStorage.removeItem('remember_mqttpwd_' + CONFIG.client_id);
+    sessionStorage.removeItem('mqttpwd_' + CONFIG.client_id);
   });
 
-  for (const platform of ['ECODX', 'ECOKC']) {
+  for (const platform of ['PREVDX', 'ECODX', 'PREVKC', 'ECOKC']) {
     it(`blocks an external return URL before calling ${platform} authentication`, () => {
       component.form.patchValue({ platformSelector: platform });
       component.redirectUri = 'https://attacker.example/collect';
@@ -67,7 +71,7 @@ describe('LoginComponent return handling', () => {
 
     it(`stores the ${platform} session and returns without a token in the URL`, () => {
       component.form.patchValue({ platformSelector: platform });
-      const payload = platform === 'ECODX'
+      const payload = platform.endsWith('DX')
         ? { scope: ['SUBSCRIBER:123'] }
         : { parentSubscriptions: { 'actility-sup/tpx': [{ subscriberId: '123' }] }, sub: 'user-1' };
       const token = `header.${btoa(JSON.stringify(payload))}.signature`;
@@ -77,7 +81,43 @@ describe('LoginComponent return handling', () => {
 
       expect(auth.setSession).toHaveBeenCalledOnceWith(token, 'expected-state');
       expect(assign).toHaveBeenCalledOnceWith('https://example.com/abeemap/map?filter=active');
+      expect(component.form.get('rememberMqttAPIKey')?.value).toBeTrue();
+      expect(localStorage.getItem('mqttpwd_' + CONFIG.client_id)).toBe('test-key');
+      expect(sessionStorage.getItem('mqttpwd_' + CONFIG.client_id)).toBeNull();
     });
+
+    it(`keeps an opted-out ${platform} API key only in session storage`, () => {
+      component.form.patchValue({ platformSelector: platform, rememberMqttAPIKey: false });
+      const payload = platform.endsWith('DX')
+        ? { scope: ['SUBSCRIBER:123'] }
+        : { parentSubscriptions: { 'actility-sup/tpx': [{ subscriberId: '123' }] }, sub: 'user-1' };
+      const token = `header.${btoa(JSON.stringify(payload))}.signature`;
+      dx.getToken.and.returnValue(of({ access_token: token }));
+      keycloak.getToken.and.returnValue(of({ access_token: token }));
+      component.onSubmit();
+      expect(assign).toHaveBeenCalled();
+      expect(localStorage.getItem('mqttpwd_' + CONFIG.client_id)).toBeNull();
+      expect(sessionStorage.getItem('mqttpwd_' + CONFIG.client_id)).toBe('test-key');
+    });
+
+    for (const response of [null, {}, { access_token: 123 }, { access_token: 'malformed' },
+      { access_token: `header.${btoa('{}')}.signature` }]) {
+      it(`rejects invalid ${platform} token responses without persisting MQTT credentials`, () => {
+        component.form.patchValue({ platformSelector: platform });
+        sessionStorage.setItem('mqtttop_' + CONFIG.client_id, 'existing-topic');
+        localStorage.setItem('mqttpwd_' + CONFIG.client_id, 'existing-key');
+        dx.getToken.and.returnValue(of(response));
+        keycloak.getToken.and.returnValue(of(response));
+        component.onSubmit();
+
+        expect(auth.setSession).not.toHaveBeenCalled();
+        expect(assign).not.toHaveBeenCalled();
+        expect(snackBar.open).toHaveBeenCalledTimes(1);
+        expect(sessionStorage.getItem('mqtttop_' + CONFIG.client_id)).toBe('existing-topic');
+        expect(localStorage.getItem('mqttpwd_' + CONFIG.client_id)).toBe('existing-key');
+        expect(sessionStorage.getItem('platform_' + CONFIG.client_id)).toBeNull();
+      });
+    }
   }
 
   for (const state of ['', 'wrong-state']) {

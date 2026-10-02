@@ -145,25 +145,49 @@ scrolling would reduce rendering costs if the retained-message limit increases.
 
 ## Further improvements
 
-- Scope bearer headers to the selected API base URL in
-  [`auth.interceptor.ts:25`](src/app/auth/auth.interceptor.ts#L25). It currently
-  attaches them to every Angular HTTP request, including static asset requests.
-  Remove full response logging at line 48: token and API-key responses include
-  credentials. Test allowed API paths and requests outside that scope.
-- Replace repeated `JSON.parse(atob(...))` in login with the existing JWT decoder
-  and validate platform-specific claims; JWT payloads use base64url encoding.
+- Fixed: [`auth.interceptor.ts`](src/app/auth/auth.interceptor.ts) scopes bearer
+  headers to the selected platform's API origin and base path, with a path boundary
+  check. Relative URLs resolve against the document base URL. Static assets,
+  other platform APIs, unrelated paths/origins, and invalid platform selections
+  receive no session token. Full response logging is removed. Regression tests
+  cover allowed and excluded requests, session expiry, caller-provided headers,
+  sensitive response handling, and HTTP errors. The production build and all
+  336 ChromeHeadless tests passed.
+- Fixed: login uses the existing `jwtDecode` decoder through
+  [`login-token.ts`](src/app/auth/login-token.ts), supporting base64url and UTF-8
+  payloads. DX subscriber scopes and Keycloak subscription/subject claims are
+  validated before building MQTT topics or saving credentials. Malformed token
+  responses show a sign-in error. Regression tests cover both ecosystem and
+  preview platforms. The login form handles submission through `ngSubmit`, shows
+  pending requests and inline errors, and prevents duplicate submissions. Tests
+  exercise the rendered form, button clicks, validation, and failed responses;
+  the production build and all 276 ChromeHeadless tests passed, including server
+  connection failures, HTTP 503 responses, and retry after either failure. The
+  user confirmed TPXLE Community login works after restoring server availability;
+  the reported login failure was a server outage. The form changes remain useful
+  for submission and feedback during future failures.
 - Extract typed MQTT messages, API responses, and beacon properties. Split the
   814-line Leaflet service into rendering, configuration, and beacon persistence
   responsibilities once the behavior defects have regression coverage.
 - Remove duplicated shared configuration between the two environment files while
   retaining production base-href URL resolution and platform-specific settings.
-- Review the deliberate persistence of MQTT API keys in local storage. The
-  current logout test explicitly preserves the key; make remembering it a clear
-  user choice and preserve/change that behavior intentionally.
-- Guard zoom-to-devices/beacons when feature groups have no valid bounds. Replace
-  the HTTP satellite tile URL with HTTPS.
-- Run `npm run test:ci` before deploying in the Pages workflow. Current tests cover
-  only auth happy paths/state mismatch, MQTT parsing, and marker animation.
+- Fixed: login and the API-key creation/reset dialog offer a “Remember MQTT API
+  key on this device” checkbox, enabled by default. Existing saved keys remain
+  remembered. Opting out immediately removes the local-storage copy, keeps the
+  key in session storage for reloads, and clears it on logout or session expiry.
+  The preference persists; opting back in restores persistent storage. Both key
+  entry paths use [`mqtt-api-key-storage.ts`](src/app/auth/mqtt-api-key-storage.ts).
+  Tests cover both choices, migration, reload, logout/expiry, and the rendered
+  checkbox. The production build and all 353 ChromeHeadless tests passed.
+- Fixed: zoom-to-devices/beacons now checks `bounds.isValid()` before computing
+  the center, leaving the view unchanged when feature groups have no valid bounds.
+  The satellite tile URL now uses HTTPS. Eight regression tests cover empty groups,
+  empty polygon layers, valid bounds, and zero coordinates for both zoom actions.
+- Fixed: the [Pages workflow](.github/workflows/deploy-pages.yml) runs
+  `npm run test:ci` after dependency installation and before the production build
+  and artifact upload. Failed tests block deployment. The suite now also covers
+  auth expiry and bearer scope, login claim validation and form failures, MQTT
+  connection lifecycle, bounded logs, API errors, and map bounds/lifecycle.
 - Fixed: the README now uses `npm run build` and documents `dist/abeemap/`.
   Roboto and Material Icons are bundled locally with upstream licenses, removing
   external font retrieval from production builds and browser font loading.

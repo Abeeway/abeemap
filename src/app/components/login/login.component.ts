@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 
@@ -6,13 +6,14 @@ import { ActivatedRoute } from '@angular/router';
 
 import { AuthService } from '../../auth/auth.service';
 import { getLoginReturnUrl } from '../../auth/login-return-url';
+import { getLoginMqttTopic } from '../../auth/login-token';
+import { clearMqttApiKey, isMqttApiKeyRemembered, readMqttApiKey, saveMqttApiKey, setMqttApiKeyRemembered } from '../../auth/mqtt-api-key-storage';
 import { generateState } from '../../auth/auth-tools.module';
 import { DxAdminApiService } from '../../services/dx-admin-api.service';
 import { KeycloakApiService } from '../../services/keycloak-api.service';
 import { getApiErrorMessage, isAuthenticationError } from '../../services/service-utils.service';
 import { MatSnackBar} from '@angular/material/snack-bar';
-
-// import { jwtDecode } from 'jwt-decode';
+import { finalize } from 'rxjs';
 
 import { CONFIG } from '../../../environments/environment';
 
@@ -28,6 +29,8 @@ export class LoginComponent implements OnInit {
 
   form: UntypedFormGroup;
   formSubmitAttempt: boolean = false;
+  readonly submitting = signal(false);
+  readonly loginError = signal('');
   responseType!: string;
   redirectUri!: string;
   clientId!: string;
@@ -49,13 +52,14 @@ export class LoginComponent implements OnInit {
     private snackBar: MatSnackBar,
   ) {
 
-    this.mqttAPIKey = localStorage.getItem('mqttpwd_' + CONFIG.client_id) || '';
+    this.mqttAPIKey = readMqttApiKey() || '';
     
     this.form = this.fb.group({
       platformSelector: ['ECODX', Validators.required],
       userName: ['', Validators.required],
       password: ['', Validators.required],
-      mqttAPIKey: [this.mqttAPIKey]
+      mqttAPIKey: [this.mqttAPIKey],
+      rememberMqttAPIKey: [isMqttApiKeyRemembered()]
     });
   }
 
@@ -85,6 +89,8 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit() { 
+    if (this.submitting()) return;
+    this.loginError.set('');
     this.formSubmitAttempt = true;
     const returnUrl = getLoginReturnUrl(this.redirectUri, this.document.baseURI);
     const state = this.state;
@@ -93,9 +99,16 @@ export class LoginComponent implements OnInit {
       const message = returnUrl
         ? 'This login link has expired. Start again to sign in.'
         : 'This login link cannot return to this application. Start again to sign in.';
+      this.loginError.set(message);
       this.snackBar.open(message, 'Start again', {
         panelClass: ['red-snackbar'],
       }).onAction().subscribe(() => this.authService.login());
+      return;
+    }
+
+    if (!this.form.valid) {
+      this.form.markAllAsTouched();
+      this.loginError.set('Enter your user name and password and select a platform.');
       return;
     }
 
@@ -106,10 +119,12 @@ export class LoginComponent implements OnInit {
       this.mqttAPIKey = this.form.get('mqttAPIKey')?.value;
       // const mqttTopic = this.form.get('mqttTopic')?.value;
 
-      switch (this.platformSelector) {
+      const platform = this.platformSelector;
+      switch (platform) {
 
         case 'PREVDX':
         case 'ECODX':
+          this.submitting.set(true);
           this.dxAdminApiService.getToken(
             CONFIG[this.platformSelector].GRANT_TYPE, 
             `${CONFIG.DXAPI_PROFILE}/${this.userName}`, 
@@ -117,27 +132,10 @@ export class LoginComponent implements OnInit {
             false, 
             '12hours', 
             this.platformSelector,
-          ).subscribe(
-            data => {
-              if (data) {
-
-                const decodedAccessToken = JSON.parse(atob(data.access_token.split('.')[1]));
-                // const decodedAccessToken = jwtDecode(data.access_token) as any;
-                const subscriberIdShort = decodedAccessToken.scope[0].split(':')[1];
-                const subscriberId = (100000000 + parseInt(subscriberIdShort, 10)).toString();
-                const operatorId = CONFIG[this.platformSelector].OPERATOR_ID;
-                const mqttTopic = `${operatorId}|${subscriberId}/LE_AS/abeemap/#`;
-
-                sessionStorage.setItem('mqttusr_' + CONFIG.client_id, this.userName);
-                localStorage.setItem('mqttpwd_' + CONFIG.client_id, this.mqttAPIKey);
-                sessionStorage.setItem('mqtttop_' + CONFIG.client_id, mqttTopic);
-                sessionStorage.setItem('platform_' + CONFIG.client_id, this.platformSelector);
-
-                this.finishLogin(data.access_token, state, returnUrl);
-
-              }
-            },
+          ).pipe(finalize(() => this.submitting.set(false))).subscribe(
+            data => this.handleTokenResponse(data, platform, state, returnUrl),
             error => {
+              this.loginError.set(getApiErrorMessage(error));
               if (isAuthenticationError(error)) return;
               this.snackBar.open(
                 'ERROR: ' + getApiErrorMessage(error),
@@ -150,34 +148,17 @@ export class LoginComponent implements OnInit {
           break;
         case 'PREVKC':
         case 'ECOKC':
+          this.submitting.set(true);
           this.keycloakApiService.getToken(
             this.userName, this.password, 
             CONFIG[this.platformSelector].GRANT_TYPE, 
             CONFIG[this.platformSelector].CLIENT_ID, 
             CONFIG[this.platformSelector].SCOPE,
             this.platformSelector,
-          ).subscribe(
-            data => {
-              if (data) {
-
-                const decodedAccessToken = JSON.parse(atob(data.access_token.split('.')[1]));
-
-                const subscriberId = decodedAccessToken.parentSubscriptions['actility-sup/tpx'][0].subscriberId;
-                const realm = CONFIG[this.platformSelector].REALM;
-                const operatorId = CONFIG[this.platformSelector].OPERATOR_ID;
-                const enduserId = decodedAccessToken.sub;
-                const mqttTopic = `${operatorId}|${subscriberId}|${realm}|${enduserId}/LE_AS/abeemap/#`;
-
-                sessionStorage.setItem('mqttusr_' + CONFIG.client_id, this.userName);
-                localStorage.setItem('mqttpwd_' + CONFIG.client_id, this.mqttAPIKey);
-                sessionStorage.setItem('mqtttop_' + CONFIG.client_id, mqttTopic);
-                sessionStorage.setItem('platform_' + CONFIG.client_id, this.platformSelector);
-
-                this.finishLogin(data.access_token, state, returnUrl);
-
-              }
-            },
+          ).pipe(finalize(() => this.submitting.set(false))).subscribe(
+            data => this.handleTokenResponse(data, platform, state, returnUrl),
             error => {
+              this.loginError.set(getApiErrorMessage(error));
               if (isAuthenticationError(error)) return;
               this.snackBar.open(
                 'ERROR: ' + getApiErrorMessage(error),
@@ -189,9 +170,29 @@ export class LoginComponent implements OnInit {
           );
           break;
         default:
+          this.loginError.set('Select a supported location engine platform.');
       }
 
     }
+  }
+
+  private handleTokenResponse(response: unknown, platform: string, state: string, returnUrl: URL): void {
+    const token = typeof response === 'object' && response !== null && 'access_token' in response
+      ? response.access_token : undefined;
+    const mqttTopic = typeof token === 'string' ? getLoginMqttTopic(token, platform) : null;
+    if (typeof token !== 'string' || !mqttTopic) {
+      this.loginError.set('The server returned an invalid session. Please sign in again.');
+      this.snackBar.open('The server returned an invalid session. Please sign in again.', 'x', {
+        panelClass: ['red-snackbar'],
+      });
+      return;
+    }
+
+    sessionStorage.setItem('mqttusr_' + CONFIG.client_id, this.userName);
+    saveMqttApiKey(this.mqttAPIKey, this.form.get('rememberMqttAPIKey')?.value === true);
+    sessionStorage.setItem('mqtttop_' + CONFIG.client_id, mqttTopic);
+    sessionStorage.setItem('platform_' + CONFIG.client_id, platform);
+    this.finishLogin(token, state, returnUrl);
   }
 
   private finishLogin(token: string, state: string, returnUrl: URL): void {
@@ -200,6 +201,7 @@ export class LoginComponent implements OnInit {
       // stays in session storage rather than travelling in the return URL.
       this.document.location.assign(returnUrl.href);
     } else {
+      this.loginError.set('The server returned an invalid or expired session. Please sign in again.');
       this.snackBar.open('The server returned an invalid or expired session. Please sign in again.', 'x', {
         panelClass: ['red-snackbar'],
       });
@@ -208,7 +210,11 @@ export class LoginComponent implements OnInit {
 
   clearMQTTAPIKey() {
     this.form.patchValue({mqttAPIKey: ''});
-    localStorage.removeItem('mqttpwd_' + CONFIG.client_id);
+    clearMqttApiKey();
+  }
+
+  onRememberMqttAPIKeyChange(remember: boolean): void {
+    setMqttApiKeyRemembered(remember);
   }
 
   onPlatformChange() {}

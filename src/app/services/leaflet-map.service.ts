@@ -134,7 +134,7 @@ const TILES_GOOGLE_STREETS = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}
   subdomains:['mt0','mt1','mt2','mt3']
 });
 
-const TILES_GOOGLE_SAT = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+const TILES_GOOGLE_SAT = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
   minZoom: 3,
   maxZoom: 23,
   subdomains:['mt0','mt1','mt2','mt3']
@@ -524,7 +524,9 @@ export class LeafletMapService {
     // map.fitBounds(this.beaconsFeatureGroup.getBounds(), {padding: [150, 150]});
     // map.setZoom(DEFAULT_ZOOM_LEVEL);
 
-    map.setView(this.beaconsFeatureGroup.getBounds().getCenter(), DEFAULT_ZOOM_LEVEL);
+    const bounds = this.beaconsFeatureGroup.getBounds();
+    if (!bounds.isValid()) return;
+    map.setView(bounds.getCenter(), DEFAULT_ZOOM_LEVEL);
 
     // map.flyToBounds(this.beaconsFeatureGroup.getBounds()) // , {padding: [50, 50]});
   }
@@ -533,7 +535,9 @@ export class LeafletMapService {
     // map.fitBounds(this.devicesFeatureGroup.getBounds(), {padding: [150, 150]});
     // map.setZoom(DEFAULT_ZOOM_LEVEL);
 
-    map.setView(this.devicesFeatureGroup.getBounds().getCenter(), DEFAULT_ZOOM_LEVEL);
+    const bounds = this.devicesFeatureGroup.getBounds();
+    if (!bounds.isValid()) return;
+    map.setView(bounds.getCenter(), DEFAULT_ZOOM_LEVEL);
 
     // map.flyToBounds(this.devicesFeatureGroup.getBounds(), {padding: [150, 150]});
   }

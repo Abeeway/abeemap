@@ -1,5 +1,6 @@
 import { CONFIG } from '../../environments/environment';
 import { AuthService } from './auth.service';
+import { saveMqttApiKey } from './mqtt-api-key-storage';
 
 function encodeJwtPart(value: object): string {
   return btoa(JSON.stringify(value))
@@ -88,7 +89,7 @@ describe('AuthService', () => {
     expect(service.userId).toBe('fallback-user');
   });
 
-  it('clears session storage and in-memory credentials on logout', () => {
+  it('clears session credentials on logout while preserving API keys remembered by default', () => {
     const token = createToken();
     sessionStorage.setItem(key('access_token'), token);
     sessionStorage.setItem(key('platform'), 'PREVDX');
@@ -113,6 +114,26 @@ describe('AuthService', () => {
     expect(sessionStorage.getItem(key('mqttusr'))).toBeNull();
     expect(sessionStorage.getItem(key('mqtttop'))).toBeNull();
     expect(localStorage.getItem(key('mqttpwd'))).toBe('remembered-api-key');
+  });
+
+  it('restores an opted-out key across reload and clears it on logout', () => {
+    saveMqttApiKey('session-only-key', false);
+    sessionStorage.setItem(key('access_token'), createToken());
+    const service = createService();
+    expect(service.mqttPassword).toBe('session-only-key');
+    expect(localStorage.getItem(key('mqttpwd'))).toBeNull();
+    service.deleteSession();
+    expect(service.mqttPassword).toBeNull();
+    expect(sessionStorage.getItem(key('mqttpwd'))).toBeNull();
+    expect(localStorage.getItem(key('remember_mqttpwd'))).toBe('false');
+  });
+
+  it('clears a session-only key when its token has expired', () => {
+    saveMqttApiKey('session-only-key', false);
+    sessionStorage.setItem(key('access_token'), createToken({ exp: 1 }));
+    const service = createService();
+    expect(service.loggedIn).toBeFalse();
+    expect(sessionStorage.getItem(key('mqttpwd'))).toBeNull();
   });
   for (const [name, token] of [
     ['malformed JWT', 'not-a-jwt'],

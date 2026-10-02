@@ -4,8 +4,7 @@
   </mat-toolbar>
   <div class="login-container">
 
-    <!-- <form [formGroup]="form" (ngSubmit)="onSubmit()"> -->
-    <form [formGroup]="form">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" [attr.aria-busy]="submitting()">
 
       <mat-card appearance="outlined" class="login-card">
 
@@ -54,7 +53,7 @@
           <mat-label>MQTT API Key</mat-label>
           <input matInput id="api-key" type="text" autocomplete="new-password" formControlName="mqttAPIKey">
           @if (form.get('mqttAPIKey')?.value) {
-            <button matSuffix mat-icon-button aria-label="Clear" (click)="clearMQTTAPIKey()">
+            <button matSuffix mat-icon-button type="button" aria-label="Clear" (click)="clearMQTTAPIKey()">
               <mat-icon>close</mat-icon>
             </button>
           }
@@ -64,15 +63,24 @@
             </mat-error>
           }
         </mat-form-field>
+        <mat-checkbox formControlName="rememberMqttAPIKey" (change)="onRememberMqttAPIKeyChange($event.checked)">
+          Remember MQTT API key on this device
+        </mat-checkbox>
+        <!-- <p>When unchecked, the key is kept only for this session and cleared on logout.</p> -->
         <!-- <mat-form-field class="full-width-input">
         <input matInput placeholder="MQTT Topic" formControlName="mqttTopic" required>
         <mat-error *ngIf="isFieldInvalid('mqttTopic')">
           Please inform your MQTT Topic
         </mat-error>
       </mat-form-field> -->
+      @if (loginError()) {
+        <p role="alert">{{ loginError() }}</p>
+      }
     </mat-card-content>
     <mat-card-actions class="centered-card-element">
-      <button mat-raised-button color="primary" type="submit" (click)="onSubmit()">Login</button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Signing in…' : 'Login' }}
+      </button>
     </mat-card-actions>
     <mat-card-footer></mat-card-footer>
   </mat-card>

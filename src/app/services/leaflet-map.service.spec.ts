@@ -11,6 +11,55 @@ import { DxLocationApiService } from './dx-location-api.service';
 import { LeafletMapService } from './leaflet-map.service';
 import { MqttClientService } from './mqtt-client.service';
 
+describe('zoom to feature groups', () => {
+  let service: LeafletMapService;
+  let map: jasmine.SpyObj<L.Map>;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    service = new LeafletMapService(
+      document, TestBed.inject(Injector), TestBed.inject(HttpClient),
+      jasmine.createSpyObj<DxLocationApiService>('DxLocationApiService', ['getBluetoothMap']),
+      jasmine.createSpyObj<MatSnackBar>('MatSnackBar', ['open']),
+      jasmine.createSpyObj<MatDialog>('MatDialog', ['open']),
+      { locationUpdateMessage$: new Subject() } as unknown as MqttClientService,
+    );
+    map = jasmine.createSpyObj<L.Map>('Map', ['setView']);
+  });
+
+  afterEach(() => {
+    void service.myAudioContext.close();
+  });
+
+  for (const target of ['Beacons', 'Devices'] as const) {
+    const groupKey = target === 'Beacons' ? 'beaconsFeatureGroup' : 'devicesFeatureGroup';
+    const zoomMethod = target === 'Beacons' ? 'zoomToBeacons' : 'zoomToDevices';
+
+    it(`leaves the view unchanged when ${target.toLowerCase()} are empty`, () => {
+      expect(() => service[zoomMethod](map)).not.toThrow();
+      expect(map.setView).not.toHaveBeenCalled();
+    });
+
+    it(`leaves the view unchanged when ${target.toLowerCase()} have layers without bounds`, () => {
+      service[groupKey].addLayer(L.polygon([]));
+      expect(() => service[zoomMethod](map)).not.toThrow();
+      expect(map.setView).not.toHaveBeenCalled();
+    });
+
+    it(`centers on ${target.toLowerCase()} at the existing zoom level`, () => {
+      service[groupKey].addLayer(L.marker([47, 19])).addLayer(L.marker([48, 20]));
+      service[zoomMethod](map);
+      expect(map.setView).toHaveBeenCalledOnceWith(L.latLng(47.5, 19.5), 19);
+    });
+
+    it(`accepts a single ${target.toLowerCase()} marker at zero coordinates`, () => {
+      service[groupKey].addLayer(L.marker([0, 0]));
+      service[zoomMethod](map);
+      expect(map.setView).toHaveBeenCalledOnceWith(L.latLng(0, 0), 19);
+    });
+  }
+});
+
 describe('floorplan loading after map destruction', () => {
   let service: LeafletMapService;
   let http: HttpTestingController;

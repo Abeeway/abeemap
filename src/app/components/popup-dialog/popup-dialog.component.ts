@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject, ChangeDetectionStrategy } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { CONFIG } from '../../../environments/environment';
+import { isMqttApiKeyRemembered, saveMqttApiKey, setMqttApiKeyRemembered } from '../../auth/mqtt-api-key-storage';
 
 import { AuthService } from '../../auth/auth.service';
 import { MqttClientService } from '../../services/mqtt-client.service';
@@ -13,6 +13,7 @@ import { MqttClientService } from '../../services/mqtt-client.service';
     standalone: false
 })
 export class PopupDialogComponent implements OnInit {
+  rememberMqttAPIKey = isMqttApiKeyRemembered();
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -23,10 +24,15 @@ export class PopupDialogComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  saveAsCookieAndUse() {
+  saveAndUse() {
     this.authService.mqttPassword = this.data.message;
-    localStorage.setItem('mqttpwd_' + CONFIG.client_id, this.data.message);
+    saveMqttApiKey(this.data.message, this.rememberMqttAPIKey);
     this.mqttClientService.connect();
+  }
+
+  onRememberMqttAPIKeyChange(remember: boolean): void {
+    this.rememberMqttAPIKey = remember;
+    setMqttApiKeyRemembered(remember);
   }
 
 }

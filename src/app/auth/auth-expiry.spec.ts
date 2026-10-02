@@ -9,6 +9,7 @@ import { AuthInterceptor } from './auth.interceptor';
 import { canActivate } from './auth.guard';
 import { NavigationComponent } from '../components/navigation/navigation.component';
 import { MqttClientService } from '../services/mqtt-client.service';
+import { CONFIG } from '../../environments/environment';
 
 describe('session expiry at application boundaries', () => {
   let auth: AuthService;
@@ -54,8 +55,8 @@ describe('session expiry at application boundaries', () => {
       const token = auth.token;
       if (expired) jasmine.clock().mockDate(new Date(Date.now() + 3000));
       const handle = jasmine.createSpy('handle').and.returnValue(EMPTY);
-      const interceptor = new AuthInterceptor(auth);
-      interceptor.intercept(new HttpRequest('GET', '/api/example'), { handle } as HttpHandler);
+      const interceptor = new AuthInterceptor(auth, document);
+      interceptor.intercept(new HttpRequest('GET', `${CONFIG[auth.platform].API_BASE_URL}/core/latest/api/devices`), { handle } as HttpHandler);
 
       const request = handle.calls.mostRecent().args[0] as HttpRequest<unknown>;
       expect(request.headers.get('Authorization')).toBe(expired ? null : `Bearer ${token}`);

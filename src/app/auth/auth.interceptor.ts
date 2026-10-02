@@ -1,20 +1,20 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import {
   HttpRequest,
   HttpHandler,
   HttpEvent,
   HttpInterceptor,
-  HttpResponse,
 } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
 
 import { AuthService } from './auth.service';
+import { CONFIG } from '../../environments/environment';
 
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, @Inject(DOCUMENT) private document: Document) {}
 
   intercept(
     request: HttpRequest<unknown>,
@@ -22,33 +22,31 @@ export class AuthInterceptor implements HttpInterceptor {
   ): Observable<HttpEvent<unknown>> {
     const token = this.authService.isAuthenticated() ? this.authService.token : undefined;
 
-    if (token) {
+    if (token && this.isSelectedApiRequest(request.url)) {
       request = request.clone({
         headers: request.headers.set('Authorization', 'Bearer ' + token),
       });
     }
 
-    /*
-    if (!request.headers.has('Content-Type')) {
-      request = request.clone({
-        headers: request.headers.set('Content-Type', 'application/json'),
-      });
+    return next.handle(request);
+  }
+
+  private isSelectedApiRequest(requestUrl: string): boolean {
+    const platform = this.authService.platform;
+    if (!['ECODX', 'ECOKC', 'PREVDX', 'PREVKC'].includes(platform)) return false;
+    const baseUrl: unknown = CONFIG[platform]?.API_BASE_URL;
+    if (typeof baseUrl !== 'string') return false;
+
+    try {
+      const base = new URL(baseUrl);
+      const url = new URL(requestUrl, this.document.baseURI);
+      const basePath = base.pathname.replace(/\/+$/, '');
+      return ['http:', 'https:'].includes(base.protocol)
+        && url.origin === base.origin
+        && !url.username && !url.password
+        && (url.pathname === basePath || url.pathname.startsWith(`${basePath}/`));
+    } catch {
+      return false;
     }
-
-    request = request.clone({
-      headers: request.headers.set('Accept', 'application/json'),
-    });
-    */
-
-    // return next.handle(request);
-
-    return next.handle(request).pipe(
-      map((event: HttpEvent<any>) => {
-        if (event instanceof HttpResponse) {
-          console.log('event--->>>', event);
-        }
-        return event;
-      })
-    );
   }
 }

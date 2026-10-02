@@ -35,9 +35,10 @@ npm run test:ci
 - `npm test` starts watch mode; `npm run test:ci` runs Jasmine/Karma once with
   ChromeHeadless. Chrome/Chromium must be installed; set `CHROME_BIN` if necessary.
 - `npm run test:coverage` generates coverage in `coverage/abeemap`.
-- Roboto and Material Icons are bundled in `src/assets/fonts/` with license
-  notices. Preserve relative font URLs and licenses when updating them; builds
-  and browser font loading do not need Google Fonts access.
+- Application text uses system fonts. Material Icons is bundled in
+  `src/assets/fonts/` with its license notice. Preserve relative font URLs and
+  licenses when updating it; builds and browser font loading do not need Google
+  Fonts access.
 - There is no configured lint script. Do not claim lint validation was performed.
 
 ## Implementation conventions

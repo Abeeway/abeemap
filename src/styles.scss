@@ -1,3 +1,13 @@
+@use '@angular/material' as mat;
+
+$system-font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+html {
+  @include mat.all-component-typographies(
+    mat.m2-define-typography-config($font-family: $system-font-family)
+  );
+}
+
 // @use "@material/textfield";
 // @use "@material/button";
 // mat-form-field {
@@ -38,7 +48,7 @@ app-binder-config
   padding: 0px;
 }
 
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; font-family: $system-font-family; }
 
 .blue-snackbar {
   --mat-snackbar-container-color: #0464b3;

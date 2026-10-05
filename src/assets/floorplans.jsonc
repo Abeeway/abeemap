@@ -21,22 +21,41 @@
   //   "zoom": 19,
   // },
 
+  // {
+  //   "id": "automa",
+  //   "name": "Automa",
+  //   "image": "assets/floorplans/automa_2026_logo.png",
+  //   "bounds": [
+
+  //     [
+  //         52.257454,
+  //         4.688375,
+  //     ],
+  //     [
+  //         52.258848,
+  //         4.689869,
+  //     ],
+  //   ],
+  //   "zoom": 18,
+  //   "default": true,
+  // },
+
   {
-    "id": "automa",
-    "name": "Automa",
+    "id": "automa1",
+    "name": "Automa1",
     "image": "assets/floorplans/automa_2026_logo.png",
     "bounds": [
 
       [
-          52.257454,
-          4.688375,
+          52.258088,
+          4.688228,
       ],
       [
-          52.258848,
-          4.689869,
+          52.258436,
+          4.688609,
       ],
     ],
-    "zoom": 18,
+    "zoom": 20,
     "default": true,
   },
 

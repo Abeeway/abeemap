@@ -450,8 +450,7 @@ export class LeafletMapService {
 
   initMap(map:any) {
 
-    map.addLayer(TILES_OSM);
-    // map.addLayer(TILES_GOOGLE_SAT);
+    map.addLayer(TILES_GOOGLE_SAT);
     map.addLayer(this.floorplanImages);
     map.addLayer(this.devicesFeatureGroup);
     map.addLayer(this.beaconsFeatureGroup);

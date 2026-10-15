@@ -43,19 +43,26 @@
   {
     "id": "automa1",
     "name": "Automa1",
-    "image": "assets/floorplans/automa_2026_logo1.png",
+    "image": "assets/floorplans/stockholmsmassan.png",
     "bounds": [
-
       [
-          52.258088,
-          4.688228,
+        59.277383,  
+        18.013993
       ],
+      // [
+      //   59.279372,
+      //   18.013993
+      // ],
       [
-          52.258436,
-          4.688609,
-      ],
+        59.279372,
+        18.019453
+      ]
+      // [
+      //   59.277383,
+      //   18.019453
+      // ]
     ],
-    "zoom": 20,
+    "zoom": 17,
     "default": true,
   },
 
